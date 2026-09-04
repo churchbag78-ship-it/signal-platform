@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "AAC App",
+    "slug": "aac-app",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.aacapp"
+    },
+    "android": {
+      "package": "com.yourcompany.aacapp",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow AAC App to access your camera to create picture boards."
+        }
+      ]
+    ]
+  }
+}

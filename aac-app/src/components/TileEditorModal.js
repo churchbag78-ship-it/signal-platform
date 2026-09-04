@@ -22,7 +22,14 @@ export default function TileEditorModal({ visible, initialTile, onSave, onCancel
 
   useEffect(() => {
     if (visible) {
-      setDraft(initialTile ? { ...EMPTY_TILE, ...initialTile } : EMPTY_TILE);
+      // initialTile.emoji can be stored as null (no emoji set) — TextInput's
+      // value must stay a string or the input flips from controlled to
+      // uncontrolled and React warns.
+      setDraft(
+        initialTile
+          ? { ...EMPTY_TILE, ...initialTile, emoji: initialTile.emoji || '' }
+          : EMPTY_TILE
+      );
     }
   }, [visible, initialTile]);
 

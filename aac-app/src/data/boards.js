@@ -32,4 +32,20 @@ export const categoryColors = {
   feeling: '#D85A30',
   response: '#7F77DD',
   need: '#D4537E',
+  other: '#5A6472',
 };
+
+// Higher-contrast palette for the CVI (cortical/cerebral visual impairment)
+// accessibility mode: fewer, more saturated hues with more separation between
+// them, per common CVI guidance (bold color, reduced palette complexity).
+export const highContrastCategoryColors = {
+  pronoun: '#0057B8',
+  verb: '#00843D',
+  descriptor: '#C46A00',
+  feeling: '#D7263D',
+  response: '#5B2A86',
+  need: '#B8005C',
+  other: '#000000',
+};
+
+export const CATEGORIES = ['pronoun', 'verb', 'descriptor', 'feeling', 'response', 'need', 'other'];

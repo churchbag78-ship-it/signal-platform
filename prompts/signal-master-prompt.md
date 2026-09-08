@@ -1,4 +1,4 @@
-# Signal Master Research Prompt (v0.2)
+# Signal Master Research Prompt (v0.3)
 
 Paste everything below the line into a research-capable AI session, with
 the INPUTS filled in. The rules it references are defined in
@@ -141,7 +141,7 @@ Score each survivor 0–100 and show the component breakdown:
 | Signal recency (≤30d full, then declining; >12m excluded) | 15 |
 | Evidence quality | 15 |
 | Commercial relevance | 15 |
-| Decision-maker clarity | 10 |
+| Decision-maker role — the *function* that owns this problem, not a person | 10 |
 
 Then apply caps: sources not opened → max 70 and confidence ≤ Medium;
 single trade-press source → max 75; no date established → max 65;
@@ -190,7 +190,9 @@ SIGNAL                what happened
 SIGNAL DATE
 EVIDENCE              what the source says
 SOURCE                url + source type
-DECISION MAKER / ROLE  publicly available professional info only
+DECISION-MAKER ROLE   the function that owns this problem, and why
+CONTACT               a named person only if genuinely found; "not established"
+                      is a complete answer and costs the row nothing
 WHY NOW               what changed, when, and what it implies — specific,
                       never "they may need X"
 COMMERCIAL OPPORTUNITY  the likely deal

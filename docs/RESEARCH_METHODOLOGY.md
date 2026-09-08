@@ -1,4 +1,10 @@
-# Signal — Research Methodology (v0.2)
+# Signal — Research Methodology (v0.3)
+
+_v0.3 changes: the decision-maker component now scores identification of
+the FUNCTION that owns the problem, not a named person (§6, §9). Person-
+level contact data carries no score weight and is a downstream enrichment
+layer, so no contact provider can gate an opportunity. The deterministic
+parts of this document are now implemented and tested in `engine/`._
 
 _v0.2 changes, from Pilot A (Orbital Direct, 2026-09-08): added the
 verification-status rule (§4), the source-page dating rule (§4), trade
@@ -205,7 +211,16 @@ the total.
 | Signal recency | 15 | ≤30 days (see bands, section 4) |
 | Evidence quality | 15 | Tier 1–2, or 2+ genuinely independent sources |
 | Commercial relevance | 15 | A specific, articulable "why now" with a plausible deal |
-| Decision-maker clarity | 10 | Named, current, owns this problem |
+| Decision-maker role | 10 | The function that owns this problem is identified, with a reason |
+
+The decision-maker component scores the **function**, not a named person.
+Identifying that a new facility puts this problem with Operations rather
+than Finance is reasoning, and it is available on every candidate without
+any provider. A person's name is enrichment: it is attached afterwards,
+only to opportunities that already qualify, and it carries no score
+weight — so an absent or unaffordable contact provider can never suppress
+a real opportunity. Pilot A, where the right person was unidentifiable on
+every row, is what this rule exists to survive.
 
 **Caps and penalties, applied after the components:**
 
@@ -301,8 +316,17 @@ public profile. Do not compile or infer personal contact details;
 UK/EU data protection applies to this work from the first run, not from
 the first paying customer.
 
-**Open finding — this stage does not currently work.** Pilot A identified
-a decision maker for none of its seven rows. Press coverage of £5m–£50m
+**Resolved in v0.3 — the stage was asking for the wrong thing.** Pilot A
+identified a named decision maker for none of its seven rows, which under
+v0.2 cost every row 10 points for something no amount of research was
+going to produce. The split now is: identify the owning *function* by
+reasoning (always possible, scored), and treat the *person* as optional
+downstream enrichment (never scored, never blocking). Person-level
+enrichment remains available to plug in — see `docs/PROVIDER_NOTES.md` —
+but is no longer a dependency of the method.
+
+The original finding, for the record. Pilot A identified a decision maker
+for none of its seven rows. Press coverage of £5m–£50m
 companies names founders and managing directors; it does not name the
 operations or supply-chain lead who actually owns the problem. Web
 research alone appears unable to close this, which leaves two options:

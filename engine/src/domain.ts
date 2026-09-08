@@ -69,6 +69,55 @@ export interface Signal {
   structural?: boolean;
 }
 
+/**
+ * The epistemic spine of the product.
+ *
+ * A FACT is something a source states, and carries that source.
+ * An INFERENCE is something we concluded, and carries what it was concluded
+ * from.
+ * A HYPOTHESIS is a commercial implication — the reason to sell — and is
+ * always labelled as unproven, with a stated way to test it.
+ *
+ * Keeping these separate is what stops "they announced a new facility" and
+ * "they need a freight forwarder" from being presented with the same
+ * authority. Collapsing them is the failure mode that makes a lead list look
+ * like intelligence when it isn't.
+ */
+export interface Fact {
+  kind: 'fact';
+  id: string;
+  /** What the source states, quoted or closely paraphrased. */
+  statement: string;
+  source: Source;
+  /** When the thing happened. */
+  eventDate?: IsoDate;
+  /** When we found out about it. Never a substitute for eventDate. */
+  discoveredAt: IsoDate;
+  verification: Verification;
+}
+
+export interface Inference {
+  kind: 'inference';
+  id: string;
+  statement: string;
+  /** Ids of the claims this was concluded from. Never empty. */
+  derivedFrom: string[];
+  reasoning: string;
+}
+
+export interface Hypothesis {
+  kind: 'hypothesis';
+  id: string;
+  /** The commercial implication for the client. */
+  statement: string;
+  derivedFrom: string[];
+  reasoning: string;
+  /** What would confirm or kill this. A hypothesis you cannot test is an opinion. */
+  testableBy: string;
+}
+
+export type Claim = Fact | Inference | Hypothesis;
+
 export type ContradictionSeverity = 'caveat' | 'conflicting' | 'fatal';
 
 export interface Contradiction {
@@ -108,6 +157,8 @@ export interface Candidate {
   inferenceSteps: number;
   decisionMakerRole?: DecisionMakerRole;
   contact?: ContactResult;
+  /** The fact → inference → hypothesis chain behind this candidate. */
+  claims?: Claim[];
 }
 
 /** Normalises a domain so it can be used as the identity key. */

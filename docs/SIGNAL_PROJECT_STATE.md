@@ -1,6 +1,6 @@
 # Signal — Project State & Recommended Next Steps
 
-_Written against: `churchbag78-ship-it/signal-platform` @ `bdaf373`, 2026-08-29._
+_Written against: `churchbag78-ship-it/signal-platform` @ `bdaf373`, 2026-09-08._
 
 ## 1. What actually exists
 

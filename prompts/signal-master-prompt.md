@@ -1,4 +1,4 @@
-# Signal Master Research Prompt (v0.1)
+# Signal Master Research Prompt (v0.2)
 
 Paste everything below the line into a research-capable AI session, with
 the INPUTS filled in. The rules it references are defined in
@@ -69,6 +69,16 @@ postings, planning applications and public records, tender and
 procurement portals, funding and acquisition coverage, regulator
 publications, and any sector-specific source your Stage 2 model implies.
 
+Search trade and export finance announcements deliberately — UK Export
+Finance, bank trade finance packages, Innovate UK, regional growth funds.
+A company that has just borrowed against future trading volume has
+committed to a change, on a timetable, in named markets.
+
+Write queries that don't surface enterprise-scale news or competitors in
+the first place. Supermarket distribution centres and national logistics
+projects are not prospects for an SME client, and filtering them out
+afterwards wastes the pool.
+
 Build a candidate pool of **120–200+ companies** before filtering. Do not
 stop at the number requested — searching for 50 and returning 50 means no
 filtering happened.
@@ -83,6 +93,12 @@ For each promising candidate, establish and record:
 - The source URL and what kind of source it is.
 - Whether other sources corroborate it *independently* — syndicated
   copies of one press release are one source, not several.
+
+**Open the sources.** A search result or a summary of a page is not the
+page. Record for each row whether you actually opened its sources; if you
+did not, the row is capped at 70 and its confidence cannot exceed Medium.
+Take the signal date from the source page, never from a search summary —
+search surfaces old stories as though they were current.
 
 Evidence rules: first-party and public-record sources can carry an
 opportunity alone; trade press and news are strong support; aggregators
@@ -127,9 +143,9 @@ Score each survivor 0–100 and show the component breakdown:
 | Commercial relevance | 15 |
 | Decision-maker clarity | 10 |
 
-Then apply caps: single trade-press source → max 75; no date established
-→ max 65; aggregator/social sources only → max 50; conflicting evidence →
-max 60. Subtract 10 for each extra inference step between the signal and
+Then apply caps: sources not opened → max 70 and confidence ≤ Medium;
+single trade-press source → max 75; no date established → max 65;
+aggregator/social sources only → max 50; conflicting evidence → max 60. Subtract 10 for each extra inference step between the signal and
 the need.
 
 Classify: 75+ confirmed opportunity · 60–74 probable · 45–59 hypothesis ·
@@ -182,6 +198,7 @@ SALES ANGLE           signal → problem → client solution, usable on a call
 SCORE                 total + component breakdown
 CONFIDENCE            High / Medium / Low
 CONTRADICTIONS        anything unresolved, or "none found"
+VERIFICATION          sources opened, or "search summary only"
 ```
 
 Finish with a **LEDGER** block: one CSV row per reported opportunity —
@@ -199,5 +216,8 @@ be appended to the client's run ledger for next time.
 - Show conflicting evidence; never hide or smooth it.
 - Use only publicly available professional information about individuals.
   Do not compile personal contact details.
+- Never reproduce a person's name from a source you did not open. Say the
+  role exists and that the name is unconfirmed. Write "not established"
+  rather than defaulting to the CEO.
 - If you could not verify something, say so in that row rather than
   writing around the gap.

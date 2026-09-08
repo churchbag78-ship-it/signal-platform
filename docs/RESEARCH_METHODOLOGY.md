@@ -1,4 +1,9 @@
-# Signal — Research Methodology (v0.1)
+# Signal — Research Methodology (v0.2)
+
+_v0.2 changes, from Pilot A (Orbital Direct, 2026-09-08): added the
+verification-status rule (§4), the source-page dating rule (§4), trade
+finance as a standing source category (§3), and enterprise-scale
+exclusion at the query stage (§1)._
 
 This is the intelligence logic behind Signal, written to be executed by a
 human + AI researcher today and turned into software later. It is
@@ -42,6 +47,12 @@ method.
 
 If the reportable count is 31, report 31. Padding is a methodology
 failure, not a presentation problem.
+
+**Exclude at the query stage, not after.** Enterprise-scale news
+(supermarket distribution centres, national logistics projects) and
+competitors dominate generic search results while never being plausible
+prospects for an SME client. Filtering them downstream wastes the pool;
+write the queries so they don't surface.
 
 ---
 
@@ -93,6 +104,14 @@ consultancy selling to a new CTO and a weak one for a pallet supplier.
 | Supply-chain disruption | Medium | Existing arrangement is under strain |
 | Award / listing / PR piece | Low | Rarely a reason to buy on its own |
 
+**Standing source category: trade and export finance.** Announcements of
+UK Export Finance facilities, bank trade finance packages, Innovate UK
+grants and regional growth funds proved the highest-yield source in Pilot
+A. A company that has just borrowed against future export volume has
+committed to shipping more, on a known timetable, and the announcement
+usually names the destination markets. Search these deliberately for any
+client whose demand rises with a customer's trading volume.
+
 Add client-specific signal types freely. The taxonomy is extensible by
 design; the rules in sections 4–5 are not.
 
@@ -124,6 +143,17 @@ evidence. No exceptions, and these three failures are the common ones:
 source, not three. Only count sources that could have failed
 independently. Syndication is the most common way a run inflates its own
 confidence.
+
+**Verification status.** Every row records whether its sources were
+actually opened. A search result, an index entry or a summary of a page is
+not the page. A row whose sources were not opened is capped at 70 and its
+confidence cannot exceed Medium, however good the underlying evidence
+looks — otherwise a degraded run is indistinguishable from a good one.
+
+**Dating rule.** A date taken from a search summary is never sufficient.
+Search flattens dates: old stories surface as though current, and Pilot A
+produced a 2020 relocation presented as live news. The signal date must
+come from the source page itself, or the row takes the no-firm-date cap.
 
 **Recency bands** (applied in scoring, section 5):
 
@@ -179,6 +209,7 @@ the total.
 
 **Caps and penalties, applied after the components:**
 
+- Sources not opened (search summary only) → cap 70, confidence ≤ Medium
 - Single tier-3 source only → cap 75
 - No date established for the signal → cap 65
 - Tier 4–5 sources only → cap 50 (and classify as hypothesis at best)
@@ -269,6 +300,23 @@ Use only publicly available professional information — role, employer,
 public profile. Do not compile or infer personal contact details;
 UK/EU data protection applies to this work from the first run, not from
 the first paying customer.
+
+**Open finding — this stage does not currently work.** Pilot A identified
+a decision maker for none of its seven rows. Press coverage of £5m–£50m
+companies names founders and managing directors; it does not name the
+operations or supply-chain lead who actually owns the problem. Web
+research alone appears unable to close this, which leaves two options:
+redefine the field as a research task handed to the salesperson, or
+accept that the eventual product needs a people-data provider — a cost,
+coverage and GDPR decision that should be made deliberately rather than
+discovered during a build. Until it is settled, name a person only when
+genuinely found, and write "not established" rather than defaulting to
+the CEO.
+
+**Never reproduce an unverified name.** If reporting names an individual
+but the source could not be opened, say the role exists and that the name
+is unconfirmed. A wrong name in front of a prospect costs more than a
+missing one.
 
 ---
 

@@ -14,7 +14,7 @@ import { CorpusClaimExtractor } from '../src/research/corpus.ts';
 import { HttpSearchClient, SEARCH_PRESETS, searchClientFromEnv } from '../src/research/http-search.ts';
 import { runPipeline } from '../src/pipeline.ts';
 import { orbitalDirect, pilotATargets } from '../fixtures/pilot-a.ts';
-import { liveCapture, liveExtractions } from '../fixtures/pilot-a-live.ts';
+import { liveCaptureV2, liveExtractionsV2 } from '../fixtures/pilot-a-live-v2.ts';
 import type { ClientProfile } from '../src/pipeline.ts';
 import type { CompanyIdentity } from '../src/domain.ts';
 
@@ -28,7 +28,7 @@ test('every query carries a disambiguator by default', () => {
   // Chinese mining equipment maker. "Slack & Parr export growth..." returned
   // academic papers about slack resources. Three of seven companies.
   const queries = buildQueries(
-    { name: 'Bramble Group', domain: 'bramblefoods.co.uk', location: 'Market Harborough' },
+    { canonicalName: 'Bramble Group', canonicalDomain: 'bramblefoods.co.uk', geography: { town: 'Market Harborough' } },
     orbitalDirect,
     6,
   );
@@ -41,7 +41,7 @@ test('every query carries a disambiguator by default', () => {
 
 test('industry is used as the qualifier when no location is known', () => {
   const queries = buildQueries(
-    { name: 'Acme', domain: 'acme.com', industry: 'technical textiles' },
+    { canonicalName: 'Acme', canonicalDomain: 'acme.com', industry: 'technical textiles' },
     orbitalDirect,
     3,
   );
@@ -50,7 +50,7 @@ test('industry is used as the qualifier when no location is known', () => {
 });
 
 test('disambiguation can be turned off to replay an older capture', () => {
-  const company = { name: 'Bramble Group', domain: 'b.com', location: 'Market Harborough' };
+  const company = { canonicalName: 'Bramble Group', canonicalDomain: 'b.com', geography: { town: 'Market Harborough' } };
 
   const off = buildQueries(company, orbitalDirect, 2, { disambiguate: false });
   assert.equal(off[1], 'Bramble Group export growth or new overseas market entry');
@@ -64,10 +64,11 @@ test('disambiguation can be turned off to replay an older capture', () => {
 test("a company's own site on another TLD needs an alias to count as first-party", () => {
   // Live run: deVOL's own devolkitchens.co.uk scored tier 4 against a target
   // declaring devolkitchens.com, which dropped the row to the aggregator cap.
-  const withoutAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', 'devolkitchens.com');
+  const withoutAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', ['devolkitchens.com']);
   assert.equal(withoutAlias.tier, 4);
 
-  const withAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', 'devolkitchens.com', [
+  const withAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', [
+    'devolkitchens.com',
     'devolkitchens.co.uk',
   ]);
   assert.equal(withAlias.tier, 1);
@@ -198,12 +199,11 @@ function prescreen(company: CompanyIdentity): string | null {
 
 function liveAdapter(withPrescreen = true) {
   return new WebResearchAdapter({
-    search: new AgentBridgeSearchClient(liveCapture),
-    extractor: new CorpusClaimExtractor(liveExtractions),
+    search: new AgentBridgeSearchClient(liveCaptureV2),
+    extractor: new CorpusClaimExtractor(liveExtractionsV2),
     targets: pilotATargets,
     runDate: RUN_DATE,
     maxQueriesPerCompany: 2,
-    disambiguateQueries: false,
     ...(withPrescreen ? { prescreen: (c: CompanyIdentity, _client: ClientProfile) => prescreen(c) } : {}),
   });
 }
@@ -218,16 +218,18 @@ test('the pre-screen rejects disqualified companies without spending a query', a
   assert.match(bleckmann!.reason, /no research spent/);
 });
 
-test('a contraction signal is rejected, not scored as a low opportunity', async () => {
+test('a contraction signal is a real signal with no commercial consequence', async () => {
   // Live run found Slack & Parr consulting on up to 40 redundancies driven by
   // falling overseas demand. Current, well-sourced, ICP-fitting — and the
-  // opposite of a buying signal.
+  // opposite of a buying signal FOR THIS CLIENT. Signal is not restricted to
+  // growth, so this is recorded with negative polarity rather than discarded.
   const adapter = liveAdapter();
   await adapter.discoverTriggers(orbitalDirect);
 
   const slackParr = adapter.rejections().find((r) => r.company.domain === 'slackandparr.com');
-  assert.equal(slackParr?.stage, 'contradiction');
-  assert.match(slackParr!.reason, /contraction/);
+  assert.equal(slackParr?.stage, 'no_commercial_consequence');
+  assert.match(slackParr!.reason, /freight demand is falling/);
+  assert.match(slackParr!.reason, /cost-reduction or restructuring vendor would read the same change/);
 });
 
 test('the live run reports only what clears the floor, and explains the rest', async () => {
@@ -243,7 +245,7 @@ test('the live run reports only what clears the floor, and explains the rest', a
   assert.equal(result.opportunities.length, 3);
   assert.deepEqual(
     result.opportunities.map((o) => o.company.name),
-    ['Maeving Ltd', 'Baltex', 'Bramble Group'],
+    ['Maeving Ltd', 'Baltex', 'deVOL Kitchens'],
   );
 
   // Every company in scope is accounted for: reported, rejected or dropped.
@@ -260,21 +262,62 @@ test('the live run rediscovered the fixture signals independently', async () => 
   await adapter.discoverTriggers(orbitalDirect);
 
   const found = new Set(adapter.signals().map((s) => s.company.domain));
-  for (const domain of ['maeving.com', 'baltex.co.uk', 'bramblefoods.co.uk']) {
+  for (const domain of ['maeving.com', 'baltex.co.uk', 'devolkitchens.com']) {
     assert.ok(found.has(domain), `${domain} rediscovered`);
   }
 });
 
-test('live research corrected a wrong inference in the fixture', async () => {
-  // The fixture inferred Maeving was a domestic-first shipper. Live research
-  // found it has exported since 2023 and ships roughly half its output.
+test('the identity gate rejects a colliding source end to end on real data', async () => {
+  // The Brambles/CHEP result from the v1 capture is carried in the v2 corpus
+  // precisely so the gate is exercised on real colliding data, not only in
+  // unit tests. The rest of the Bramble chain survives it.
+  const adapter = liveAdapter();
+  await adapter.discoverTriggers(orbitalDirect);
+
+  const bramble = adapter.signals().find((s) => s.company.domain === 'bramblefoods.co.uk');
+  assert.ok(bramble, 'Bramble still produces a signal from its surviving sources');
+  assert.equal(bramble!.identityRejections.length, 1);
+  assert.equal(bramble!.identityRejections[0]?.status, 'identity_collision');
+  assert.match(bramble!.identityRejections[0]!.url, /brambles-ltd/);
+
+  const urls = bramble!.facts.map((f) => f.source.url);
+  assert.ok(
+    urls.every((u) => !u.includes('brambles-ltd')),
+    'the colliding source never reaches the evidence corpus',
+  );
+});
+
+test('live research kept the correction to the fixture inference', async () => {
+  // The original fixture inferred Maeving was a domestic-first shipper. Live
+  // research found it has exported since 2023 and ships roughly half its
+  // output; the correction is surfaced, not silently applied.
   const adapter = liveAdapter();
   await adapter.discoverTriggers(orbitalDirect);
 
   const maeving = adapter.signals().find((s) => s.company.domain === 'maeving.com');
   assert.ok(maeving);
-  assert.ok(
-    maeving!.contradictions.some((c) => /CORRECTS THE FIXTURE/.test(c.note)),
-    'the correction is surfaced, not silently applied',
-  );
+  assert.ok(maeving!.contradictions.some((c) => /exported since 2023/.test(c.note)));
+});
+
+test('every signal carries polarity and a commercial-consequence judgement', async () => {
+  const adapter = liveAdapter();
+  await adapter.discoverTriggers(orbitalDirect);
+
+  for (const signal of adapter.signals()) {
+    assert.ok(signal.polarity, 'polarity recorded');
+    assert.equal(signal.consequence.actionable, true, 'reported signals are actionable');
+    assert.ok(signal.consequence.rationale.length > 0);
+  }
+});
+
+test('the four negative outcomes stay distinct', async () => {
+  const adapter = liveAdapter();
+  await adapter.discoverTriggers(orbitalDirect);
+
+  const stages = new Map(adapter.rejections().map((r) => [r.company.domain, r.stage]));
+
+  assert.equal(stages.get('winbrogroup.com'), 'no_trigger_found', 'researched, found nothing');
+  assert.equal(stages.get('nmsinfrastructure.com'), 'no_trigger_found');
+  assert.equal(stages.get('slackandparr.com'), 'no_commercial_consequence', 'real signal, no consequence');
+  assert.equal(stages.get('bleckmann.com'), 'icp', 'disqualified before any research');
 });

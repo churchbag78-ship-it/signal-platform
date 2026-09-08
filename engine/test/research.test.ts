@@ -37,13 +37,13 @@ test("a company's own site is first-party ONLY when the company domain is suppli
   assert.equal(withoutContext.tier, 4);
   assert.equal(withoutContext.needsReview, true);
 
-  const withContext = classifySource('https://maeving.com/en-us/pages/rm1', 'maeving.com');
+  const withContext = classifySource('https://maeving.com/en-us/pages/rm1', ['maeving.com']);
   assert.equal(withContext.tier, 1);
   assert.equal(withContext.type, 'first_party');
 });
 
 test('first-party detection handles subdomains and www', () => {
-  const result = classifySource('https://news.example.co.uk/post', 'https://www.example.co.uk');
+  const result = classifySource('https://news.example.co.uk/post', ['example.co.uk']);
   assert.equal(result.tier, 1);
 });
 
@@ -69,7 +69,7 @@ test('an unrecognised host defaults to tier 4 and is flagged for review', () => 
 
 test('queries are built from the client trigger model, not a generic template', () => {
   const queries = buildQueries(
-    { name: 'Acme Ltd', domain: 'acme.com', location: 'Leicester' },
+    { canonicalName: 'Acme Ltd', canonicalDomain: 'acme.com', geography: { town: 'Leicester' } },
     orbitalDirect,
     5,
   );
@@ -82,7 +82,7 @@ test('queries are built from the client trigger model, not a generic template', 
 });
 
 test('a contradiction query is always issued', () => {
-  const queries = buildQueries({ name: 'Acme Ltd', domain: 'acme.com' }, orbitalDirect, 99);
+  const queries = buildQueries({ canonicalName: 'Acme Ltd', canonicalDomain: 'acme.com' }, orbitalDirect, 99);
 
   assert.ok(queries.some((q) => /administration|cancelled/.test(q)));
 });
@@ -94,8 +94,8 @@ test('two clients produce different queries for the same company', () => {
     demandTriggers: ['security incident', 'digital transformation programme'],
   };
 
-  const freight = buildQueries({ name: 'Acme', domain: 'acme.com' }, orbitalDirect, 3);
-  const it = buildQueries({ name: 'Acme', domain: 'acme.com' }, itClient, 3);
+  const freight = buildQueries({ canonicalName: 'Acme', canonicalDomain: 'acme.com' }, orbitalDirect, 3);
+  const it = buildQueries({ canonicalName: 'Acme', canonicalDomain: 'acme.com' }, itClient, 3);
 
   assert.notDeepEqual(freight, it);
 });
@@ -187,7 +187,7 @@ test('a company absent from the corpus raises rather than reporting a clean nega
   const adapter = new WebResearchAdapter({
     search: new StaticSearchClient(pilotASearchCorpus),
     extractor: new CorpusClaimExtractor(pilotAExtractions),
-    targets: [{ name: 'Never Researched Ltd', domain: 'never-researched.com' }],
+    targets: [{ canonicalName: 'Never Researched Ltd', canonicalDomain: 'never-researched.com' }],
     runDate: RUN_DATE,
   });
 

@@ -1,19 +1,32 @@
 /**
- * The research loop: company/domain in, source-backed commercial signal out.
+ * The research loop: company fingerprint in, source-backed commercial signal
+ * out.
  *
- * The chain it produces is company → verified change → commercial implication
- * → client relevance → score → recommended action, and every link is either
- * sourced or explicitly labelled as reasoning.
+ * Company → verified change → commercial implication → client relevance →
+ * opportunity score → recommended sales action. Every link is either sourced
+ * or explicitly labelled as reasoning, and no source speaks for a company
+ * until it has been attributed to that company's identity fingerprint.
  */
 
 import type {
   Candidate,
-  CompanyIdentity,
   Claim,
+  CompanyIdentity,
+  Fact,
+  IdentityFingerprint,
+  IdentityVerdict,
   IsoDate,
+  SourceAttribution,
 } from '../domain.ts';
-import { normalizeDomain } from '../domain.ts';
-import { factsToEvidence, supportingFacts, validateChain } from '../claims.ts';
+import { normalizeDomain, toCompanyIdentity } from '../domain.ts';
+import {
+  factsToEvidence,
+  isFact,
+  pruneChain,
+  supportingFacts,
+  validateChain,
+} from '../claims.ts';
+import { attributeSource, ownedDomains } from '../identity.ts';
 import { assessFreshness } from '../freshness.ts';
 import { assessEvidence } from '../evidence.ts';
 import type { ClientProfile, ResearchAdapter } from '../pipeline.ts';
@@ -28,13 +41,13 @@ import type {
 export interface WebResearchOptions {
   search: SearchClient;
   extractor: ClaimExtractor;
-  /** Companies to research this run. */
-  targets: CompanyIdentity[];
+  /** Companies to research this run, as full identity fingerprints. */
+  targets: IdentityFingerprint[];
   runDate: IsoDate;
   /** Queries per company. Kept small — search is the expensive part. */
   maxQueriesPerCompany?: number;
   /**
-   * Append a location/industry qualifier to every query. Defaults to true.
+   * Append distinguishing context to every query. Defaults to true.
    * Set false only to replay a capture taken before the fix.
    */
   disambiguateQueries?: boolean;
@@ -48,39 +61,46 @@ export interface WebResearchOptions {
 }
 
 /**
- * Query generation is driven by the CLIENT's demand triggers, not a generic
- * template. Two clients researching the same company should ask different
- * questions, because they are looking for different changes.
+ * Query generation is driven by the CLIENT's demand triggers and the TARGET's
+ * distinguishing attributes.
+ *
+ * A bare company name collides with same-named businesses worldwide — the live
+ * Pilot A run lost three of seven companies that way. Disambiguation reduces
+ * that, but it is only the first line of defence; source-level identity
+ * validation in `researchCompany` is the one that must not be skipped.
  */
 export function buildQueries(
-  company: CompanyIdentity,
+  target: IdentityFingerprint,
   client: ClientProfile,
   limit = 4,
   options: { disambiguate?: boolean } = {},
 ): string[] {
-  const name = company.name;
-
-  // A bare company name collides with same-named businesses worldwide. The
-  // live Pilot A run lost 3 of 7 companies this way: "Bramble Group" returned
-  // Brambles Ltd (CHEP pallets, Australia), "NMS" returned a Chinese mining
-  // equipment maker, and "Slack & Parr" returned academic papers about slack
-  // resources. Every query carries a disambiguator by default.
-  const qualifier = options.disambiguate === false
-    ? ''
-    : ` ${company.location ?? company.industry ?? ''}`.trimEnd();
-
+  const name = target.canonicalName;
   const tidy = (query: string) => query.replace(/\s+/g, ' ').trim();
 
-  const queries = [
-    // What changed, generally and recently.
-    tidy(`${name} ${company.location ?? ''} news announcement expansion contract`),
-    // Client-specific triggers: the signal model, not a generic list.
-    ...client.demandTriggers.map((trigger) => tidy(`${name}${qualifier} ${trigger}`)),
-    // The contradiction pass has to be a query too, or it never happens.
-    tidy(`${name}${qualifier} administration closure delayed cancelled loss`),
-  ];
+  if (options.disambiguate === false) {
+    const location = target.geography?.town ?? '';
+    return [
+      tidy(`${name} ${location} news announcement expansion contract`),
+      ...client.demandTriggers.map((trigger) => tidy(`${name} ${trigger}`)),
+      tidy(`${name} administration closure delayed cancelled loss`),
+    ].slice(0, limit);
+  }
 
-  return queries.slice(0, limit);
+  // Strongest available distinguishing context, most specific first.
+  const qualifier =
+    target.geography?.town ??
+    target.geography?.region ??
+    target.industry ??
+    target.descriptors?.[0] ??
+    target.geography?.country ??
+    '';
+
+  return [
+    tidy(`${name} ${qualifier} news announcement expansion contract`),
+    ...client.demandTriggers.map((trigger) => tidy(`${name} ${qualifier} ${trigger}`)),
+    tidy(`${name} ${qualifier} administration closure restructuring relocation`),
+  ].slice(0, limit);
 }
 
 /** Evidence quality derived from what the sources actually are. */
@@ -90,12 +110,20 @@ export function deriveEvidenceQuality(claims: Claim[], hypothesisId: string): nu
 
   const assessment = assessEvidence(factsToEvidence(facts));
 
-  // Tier drives most of it; independence and verification adjust.
   const tierPoints = { 1: 11, 2: 10, 3: 7, 4: 3, 5: 1 }[assessment.bestTier] ?? 1;
   const independencePoints = Math.min(3, Math.max(0, assessment.independentSources - 1));
   const verificationPoints = assessment.verification === 'sources_opened' ? 1 : 0;
 
   return Math.min(15, tierPoints + independencePoints + verificationPoints);
+}
+
+/**
+ * Falls back to the source URL when an extractor supplied no attribution.
+ * A source with no attribution can still be resolved by its host, but it can
+ * never reach "match" on name alone — which is the point.
+ */
+function attributionFor(fact: Fact): SourceAttribution {
+  return fact.attribution ?? { url: fact.source.url };
 }
 
 export class WebResearchAdapter implements ResearchAdapter {
@@ -105,12 +133,13 @@ export class WebResearchAdapter implements ResearchAdapter {
     this.#options = options;
   }
 
-  /** Research one company end to end. */
   async researchCompany(
-    company: CompanyIdentity,
+    target: IdentityFingerprint,
     client: ClientProfile,
   ): Promise<ResearchOutcome> {
-    const domain = normalizeDomain(company.domain);
+    const domain = normalizeDomain(target.canonicalDomain);
+    const company = toCompanyIdentity(target);
+
     if (!domain) {
       return {
         outcome: 'no_signal',
@@ -123,14 +152,12 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
-    const identified: CompanyIdentity = { ...company, domain };
-
-    const prescreenReason = this.#options.prescreen?.(identified, client);
+    const prescreenReason = this.#options.prescreen?.(company, client);
     if (prescreenReason) {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'icp',
           reason: `${prescreenReason} (rejected before search — no research spent)`,
           queriesRun: [],
@@ -138,12 +165,9 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
-    const queries = buildQueries(
-      identified,
-      client,
-      this.#options.maxQueriesPerCompany ?? 4,
-      { disambiguate: this.#options.disambiguateQueries ?? true },
-    );
+    const queries = buildQueries(target, client, this.#options.maxQueriesPerCompany ?? 4, {
+      disambiguate: this.#options.disambiguateQueries ?? true,
+    });
 
     const results = [];
     for (const query of queries) {
@@ -151,7 +175,7 @@ export class WebResearchAdapter implements ResearchAdapter {
     }
 
     const extraction = await this.#options.extractor.extract({
-      company: identified,
+      company,
       client,
       results,
       runDate: this.#options.runDate,
@@ -161,7 +185,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'no_trigger_found',
           reason:
             'researched across the client trigger model; no dated commercial change found',
@@ -174,7 +198,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'icp',
           reason: extraction.icpRelevance.rationale,
           queriesRun: queries,
@@ -182,22 +206,83 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
-    const claims: Claim[] = [
+    // --- IDENTITY GATE ----------------------------------------------------
+    // Nothing reaches the evidence corpus until it has been attributed to this
+    // company. A matching name is never sufficient on its own.
+    const owned = ownedDomains(target);
+    const accepted: Fact[] = [];
+    const rejectedIds = new Set<string>();
+    const identityRejections: { url: string; status: string; explanation: string }[] = [];
+    let collisions = 0;
+
+    for (const fact of extraction.facts) {
+      const verdict: IdentityVerdict = attributeSource(target, attributionFor(fact));
+
+      if (verdict.status === 'match') {
+        accepted.push({ ...fact, identity: verdict });
+        continue;
+      }
+
+      rejectedIds.add(fact.id);
+      identityRejections.push({
+        url: fact.source.url,
+        status: verdict.status,
+        explanation: verdict.explanation,
+      });
+      if (verdict.status === 'identity_collision') collisions += 1;
+    }
+
+    if (accepted.length === 0) {
+      const collision = collisions > 0;
+      return {
+        outcome: 'no_signal',
+        rejection: {
+          company,
+          stage: collision ? 'identity_collision' : 'identity_unresolved',
+          reason: collision
+            ? 'every source describes a different company with a similar name'
+            : 'no source could be confidently attributed to this company',
+          queriesRun: queries,
+          identityRejections,
+        },
+      };
+    }
+
+    const fullChain: Claim[] = [
       ...extraction.facts,
       ...extraction.inferences,
       extraction.hypothesis,
     ];
-    const validation = validateChain(claims);
+    // Conclusions drawn from a rejected source must not outlive it.
+    const claims = pruneChain(fullChain, rejectedIds).map((claim) =>
+      isFact(claim) ? (accepted.find((f) => f.id === claim.id) ?? claim) : claim,
+    );
 
+    if (!claims.some((c) => c.id === extraction.hypothesis.id)) {
+      return {
+        outcome: 'no_signal',
+        rejection: {
+          company,
+          stage: 'identity_unresolved',
+          reason:
+            'the commercial hypothesis rested entirely on sources that could not be attributed to this company',
+          queriesRun: queries,
+          identityRejections,
+        },
+      };
+    }
+
+    const validation = validateChain(claims);
     if (!validation.valid) {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'invalid_chain',
           reason: 'the reasoning chain does not hold together',
           queriesRun: queries,
           errors: validation.errors,
+          identityRejections,
         },
       };
     }
@@ -215,10 +300,27 @@ export class WebResearchAdapter implements ResearchAdapter {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'stale',
           reason: `signal found but ${freshness.reason}`,
           queriesRun: queries,
+          identityRejections,
+        },
+      };
+    }
+
+    // A change can be real, current and well-sourced and STILL not create
+    // anything this client can act on. Contraction, closure and withdrawal are
+    // valid signal types; whether they are opportunities depends on the client.
+    if (!extraction.consequence.actionable) {
+      return {
+        outcome: 'no_signal',
+        rejection: {
+          company,
+          stage: 'no_commercial_consequence',
+          reason: extraction.consequence.rationale,
+          queriesRun: queries,
+          identityRejections,
         },
       };
     }
@@ -227,12 +329,13 @@ export class WebResearchAdapter implements ResearchAdapter {
       return {
         outcome: 'no_signal',
         rejection: {
-          company: identified,
+          company,
           stage: 'contradiction',
           reason:
             extraction.contradictions.find((c) => c.severity === 'fatal')?.note ??
             'fatal contradiction',
           queriesRun: queries,
+          identityRejections,
         },
       };
     }
@@ -244,11 +347,14 @@ export class WebResearchAdapter implements ResearchAdapter {
       .at(-1);
 
     const signal: ResearchSignal = {
-      company: identified,
+      company,
       trigger: extraction.trigger,
       whatChanged: extraction.whatChanged,
       ...(eventDate ? { eventDate } : {}),
       discoveredAt: this.#options.runDate,
+      polarity: extraction.polarity,
+      consequence: extraction.consequence,
+      identityRejections,
       claims,
       facts,
       hypothesis: extraction.hypothesis,
@@ -256,7 +362,6 @@ export class WebResearchAdapter implements ResearchAdapter {
       icpRelevance: extraction.icpRelevance,
       owningFunction: extraction.owningFunction,
       contradictions: extraction.contradictions,
-      // Measured from the chain, not asserted by the researcher.
       inferenceDepth: validation.depth,
       queriesRun: queries,
       judgements: {
@@ -269,7 +374,7 @@ export class WebResearchAdapter implements ResearchAdapter {
     };
 
     const candidate: Candidate = {
-      company: identified,
+      company,
       signal: signalShape,
       icpFitNotes: extraction.icpRelevance.rationale,
       contradictions: extraction.contradictions,
@@ -278,10 +383,10 @@ export class WebResearchAdapter implements ResearchAdapter {
       claims,
     };
 
+    void owned;
     return { outcome: 'signal', signal, candidate };
   }
 
-  /** All outcomes from the most recent discovery pass, signals and rejections. */
   readonly outcomes: ResearchOutcome[] = [];
 
   async discoverTriggers(client: ClientProfile): Promise<Candidate[]> {
@@ -291,16 +396,12 @@ export class WebResearchAdapter implements ResearchAdapter {
       this.outcomes.push(await this.researchCompany(target, client));
     }
 
-    return this.outcomes
-      .filter((o) => o.outcome === 'signal')
-      .map((o) => o.candidate);
+    return this.outcomes.filter((o) => o.outcome === 'signal').map((o) => o.candidate);
   }
 
   async assess(candidate: Candidate, _client: ClientProfile) {
     const found = this.outcomes.find(
-      (o) =>
-        o.outcome === 'signal' &&
-        o.signal.company.domain === candidate.company.domain,
+      (o) => o.outcome === 'signal' && o.signal.company.domain === candidate.company.domain,
     );
 
     if (!found || found.outcome !== 'signal') {
@@ -309,15 +410,9 @@ export class WebResearchAdapter implements ResearchAdapter {
       );
     }
 
-    const extraction = found.signal;
-    const evidenceQuality = deriveEvidenceQuality(
-      extraction.claims,
-      extraction.hypothesis.id,
-    );
-
     const judgements: ScoreJudgements = {
       ...found.signal.judgements,
-      evidenceQuality,
+      evidenceQuality: deriveEvidenceQuality(found.signal.claims, found.signal.hypothesis.id),
     };
 
     return {

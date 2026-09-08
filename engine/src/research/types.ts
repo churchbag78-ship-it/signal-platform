@@ -55,10 +55,27 @@ export interface ExtractionRequest {
   runDate: IsoDate;
 }
 
+/**
+ * Whether the change increases or decreases demand for THIS client's offer.
+ * Signal is not restricted to growth: contraction, consolidation, closure,
+ * relocation, divestment and regulatory change are all valid triggers. The
+ * question is never "is this company growing?" but "does this change create a
+ * commercially actionable consequence for this client?".
+ */
+export type SignalPolarity = 'demand_increasing' | 'demand_reducing' | 'neutral';
+
+export interface CommercialConsequence {
+  actionable: boolean;
+  rationale: string;
+}
+
 export interface ExtractionOutput {
   /** Signal type, e.g. "export_finance". Extensible — no enum. */
   trigger: string;
   whatChanged: string;
+  polarity: SignalPolarity;
+  /** Does this change create something the client can act on commercially? */
+  consequence: CommercialConsequence;
   facts: Fact[];
   inferences: Inference[];
   hypothesis: Hypothesis;
@@ -82,6 +99,10 @@ export interface ResearchSignal {
   whatChanged: string;
   eventDate?: IsoDate;
   discoveredAt: IsoDate;
+  polarity: SignalPolarity;
+  consequence: CommercialConsequence;
+  /** Sources dropped before the corpus, on identity grounds. */
+  identityRejections: { url: string; status: string; explanation: string }[];
   claims: Claim[];
   facts: Fact[];
   hypothesis: Hypothesis;
@@ -98,10 +119,21 @@ export interface ResearchSignal {
   salesAngle: string;
 }
 
+/**
+ * These outcomes must never collapse into one another. "We looked and found
+ * nothing", "we found something but it is too thin", "we could not tell whether
+ * the sources were even about this company" and "the sources were about a
+ * different company" are four different statements with four different
+ * follow-up actions.
+ */
 export type RejectionStage =
   | 'identity'
+  | 'identity_collision'
+  | 'identity_unresolved'
   | 'icp'
   | 'no_trigger_found'
+  | 'insufficient_evidence'
+  | 'no_commercial_consequence'
   | 'stale'
   | 'contradiction'
   | 'invalid_chain';
@@ -119,6 +151,8 @@ export interface NoSignal {
   queriesRun: string[];
   /** Present when the chain was built but failed validation. */
   errors?: string[];
+  /** Sources rejected on identity, with the verdict that rejected them. */
+  identityRejections?: { url: string; status: string; explanation: string }[];
 }
 
 export type ResearchOutcome =

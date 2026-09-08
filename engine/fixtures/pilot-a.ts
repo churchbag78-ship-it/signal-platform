@@ -9,7 +9,13 @@
  * and the caps lift.
  */
 
-import type { CompanyIdentity, Fact, Hypothesis, Inference } from '../src/domain.ts';
+import type {
+  Fact,
+  Hypothesis,
+  IdentityFingerprint,
+  Inference,
+  SourceAttribution,
+} from '../src/domain.ts';
 import type { ClientProfile } from '../src/pipeline.ts';
 import type { ExtractionCorpus } from '../src/research/corpus.ts';
 import type { SearchResult } from '../src/research/types.ts';
@@ -43,16 +49,93 @@ export const orbitalDirect: ClientProfile = {
   ],
 };
 
-export const pilotATargets: CompanyIdentity[] = [
-  { name: 'Maeving Ltd', domain: 'maeving.com', location: 'Coventry', industry: 'Electric motorcycle manufacturing' },
-  { name: 'Baltex', domain: 'baltex.co.uk', location: 'Ilkeston, Derbyshire', industry: 'Technical textiles' },
-  { name: 'Bramble Group', domain: 'bramblefoods.co.uk', location: 'Market Harborough', industry: 'Fine food manufacturing' },
-  { name: 'deVOL Kitchens', domain: 'devolkitchens.com', location: 'Loughborough', industry: 'Kitchen manufacturing and retail' },
-  { name: 'NMS International Group', domain: 'nmsinfrastructure.com', location: 'Market Harborough', industry: 'Infrastructure EPCF' },
-  { name: 'Winbro Group Technologies', domain: 'winbrogroup.com', location: 'Shepshed', industry: 'Precision machine tools' },
-  { name: 'Slack & Parr', domain: 'slackandparr.com', location: 'Kegworth', industry: 'Precision gear pumps' },
-  { name: 'Bleckmann', domain: 'bleckmann.com', location: 'Lutterworth', industry: 'Third-party logistics' },
-  { name: 'Aldi UK', domain: 'aldi.co.uk', location: 'Bardon, Leicestershire', industry: 'Grocery retail' },
+export const pilotATargets: IdentityFingerprint[] = [
+  {
+    canonicalName: 'Maeving Ltd',
+    canonicalDomain: 'maeving.com',
+    companyNumber: '11404796',
+    geography: { country: 'United Kingdom', region: 'West Midlands', town: 'Coventry' },
+    industry: 'Electric motorcycle manufacturing',
+    descriptors: ['electric motorcycles', 'RM1', 'RM2', 'lithium battery vehicles'],
+  },
+  {
+    canonicalName: 'Baltex',
+    canonicalDomain: 'baltex.co.uk',
+    tradingNames: ['W. Ball & Son Ltd', 'Baltex Fabrics'],
+    geography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' },
+    industry: 'Technical textiles manufacturing',
+    descriptors: ['knitted technical textiles', 'composite reinforcements', 'wound care'],
+  },
+  {
+    canonicalName: 'Bramble Group',
+    canonicalDomain: 'bramblefoods.co.uk',
+    tradingNames: ['Bramble Foods'],
+    subsidiaries: ['Whitakers Chocolates', 'The Bay Tree Food Co', 'Lings'],
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Market Harborough' },
+    industry: 'Fine food manufacturing and distribution',
+    descriptors: ['fine food gifting', 'confectionery', 'chutney and preserves'],
+  },
+  {
+    canonicalName: 'deVOL Kitchens',
+    canonicalDomain: 'devolkitchens.com',
+    // Verified: deVOL publishes its own journal and King's Award announcement
+    // on the .co.uk domain, which carries the same branding and address.
+    aliasDomains: [
+      {
+        domain: 'devolkitchens.co.uk',
+        evidence:
+          "deVOL's own journal and King's Award announcement are published on this domain under the same brand, Cotes Mill address and product range",
+        sourceUrl: 'https://www.devolkitchens.co.uk/blog/we-won-a-kings-award',
+        verifiedAt: '2026-09-08',
+        verifiedBy: 'first_party_link',
+      },
+    ],
+    companyNumber: '06707961',
+    tradingNames: ['deVOL'],
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Loughborough' },
+    industry: 'Kitchen manufacturing and retail',
+    descriptors: ['handmade kitchens', 'Cotes Mill', 'cabinetry', 'interiors'],
+  },
+  {
+    canonicalName: 'NMS International Group',
+    canonicalDomain: 'nmsinfrastructure.com',
+    tradingNames: ['NMS Infrastructure', 'NMSI'],
+    companyNumber: '06360525',
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Market Harborough' },
+    industry: 'Infrastructure EPCF development',
+    descriptors: ['turnkey infrastructure', 'Sub-Saharan Africa', 'security and defence'],
+  },
+  {
+    canonicalName: 'Winbro Group Technologies',
+    canonicalDomain: 'winbrogroup.com',
+    companyNumber: '02707834',
+    parent: 'Quaser Machine Tools',
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Shepshed' },
+    industry: 'Precision machine tool manufacturing',
+    descriptors: ['non-conventional machining', 'aerospace turbine components'],
+  },
+  {
+    canonicalName: 'Slack & Parr',
+    canonicalDomain: 'slackandparr.com',
+    parent: 'Avingtrans',
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Kegworth' },
+    industry: 'Precision gear pump manufacturing',
+    descriptors: ['gear metering pumps', 'flow dividers', 'hydraulics'],
+  },
+  {
+    canonicalName: 'Bleckmann',
+    canonicalDomain: 'bleckmann.com',
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Lutterworth' },
+    industry: 'Third-party logistics',
+    descriptors: ['supply chain management', 'fashion and lifestyle fulfilment'],
+  },
+  {
+    canonicalName: 'Aldi UK',
+    canonicalDomain: 'aldi.co.uk',
+    geography: { country: 'United Kingdom', region: 'Leicestershire', town: 'Bardon' },
+    industry: 'Grocery retail',
+    descriptors: ['supermarket', 'own distribution network'],
+  },
 ];
 
 function fact(
@@ -61,14 +144,14 @@ function fact(
   url: string,
   eventDate: string | undefined,
   originId?: string,
-  /** The company being researched, so its own site is recognised as first-party. */
-  companyDomain?: string,
+  /** Domains the company owns, so its own site is recognised as first-party. */
+  ownedDomains?: string[],
 ): Fact {
   return {
     kind: 'fact',
     id,
     statement,
-    source: toSource(url, companyDomain, originId),
+    source: toSource(url, ownedDomains, originId),
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
     // Page fetching was blocked; nothing in this corpus was opened at source.
@@ -88,6 +171,17 @@ function hypothesis(
   testableBy: string,
 ): Hypothesis {
   return { kind: 'hypothesis', id, statement, derivedFrom, reasoning, testableBy };
+}
+
+
+/**
+ * What each source states about the company it is describing — read from the
+ * result title and snippet, independently of the target. This is the input to
+ * the identity gate, so it must never be derived from the target fingerprint:
+ * that would make every source trivially match itself.
+ */
+function withAttribution(facts: Fact[], stated: Omit<SourceAttribution, 'url'>): Fact[] {
+  return facts.map((f) => ({ ...f, attribution: { url: f.source.url, ...stated } }));
 }
 
 /** Search results as captured. Trimmed to those that carried a claim. */
@@ -138,7 +232,13 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'export_finance',
     whatChanged:
       'Took a £3m UK Export Finance-backed trade finance facility to build production capacity for the US, German and French markets, adding 13 jobs at Coventry.',
-    facts: [
+    polarity: 'demand_increasing',
+    consequence: {
+      actionable: true,
+      rationale:
+        'Funded export scale-up on a regulated cargo type: more consignments, more documentation.',
+    },
+    facts: withAttribution([
       fact(
         'maeving-f1',
         'Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at its Coventry base.',
@@ -158,9 +258,9 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://maeving.com/en-us/pages/maeving-rm1-electric-motorcycle',
         undefined,
         undefined,
-        'maeving.com',
+        ['maeving.com'],
       ),
-    ],
+    ], { statedName: 'Maeving', statedGeography: { country: 'United Kingdom', town: 'Coventry' }, statedIndustry: 'electric motorbike manufacturing' }),
     inferences: [
       inference(
         'maeving-i1',
@@ -210,7 +310,13 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'export_finance',
     whatChanged:
       'Closed a seven-figure HSBC package built around EU import/export flows, with a stated expectation of 20% export growth over twelve months and manufacturing in both the UK and Poland.',
-    facts: [
+    polarity: 'demand_increasing',
+    consequence: {
+      actionable: true,
+      rationale:
+        'A new US lane plus 20% more EU volume is new freight to be arranged.',
+    },
+    facts: withAttribution([
       // All five outlets carried one HSBC release: one origin, not five sources.
       fact(
         'baltex-f1',
@@ -226,7 +332,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         '2026-07-20',
         'hsbc-baltex-release',
       ),
-    ],
+    ], { statedName: 'Baltex', statedGeography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' }, statedIndustry: 'technical textiles' }),
     inferences: [
       inference(
         'baltex-i1',
@@ -270,7 +376,13 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'new_premises',
     whatChanged:
       'Opened Lancaster House, a purpose-built 67,000 sq ft main UK distribution hub, supporting up to 50 new roles while expanding product range and customer base.',
-    facts: [
+    polarity: 'demand_increasing',
+    consequence: {
+      actionable: true,
+      rationale:
+        'Storage is closed, but outbound volume and Q4 peak overflow both grow.',
+    },
+    facts: withAttribution([
       fact(
         'bramble-f1',
         'Bramble Foods has moved into Lancaster House, a purpose-built 67,000 sq ft distribution centre at Airfield Business Park, as its main UK distribution hub.',
@@ -289,7 +401,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://www.grocerygazette.co.uk/2026/07/31/bramble-foods-opens-new-distribution-hub-and-eyes-expansion/',
         '2026-07-31',
       ),
-    ],
+    ], { statedName: 'Bramble Foods', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'fine food manufacturing and distribution' }),
     inferences: [
       inference(
         'bramble-i1',
@@ -339,7 +451,13 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'award_international_trade',
     whatChanged:
       'Recognised in the 2026 King\'s Awards for Enterprise for International Trade, while supplying US showrooms in New York and Los Angeles from Leicestershire production.',
-    facts: [
+    polarity: 'demand_increasing',
+    consequence: {
+      actionable: true,
+      rationale:
+        'New Asian and Nordic lanes need crating and consolidation decisions now.',
+    },
+    facts: withAttribution([
       fact(
         'devol-f1',
         'deVOL Kitchens is among six Leicestershire recipients of the 2026 King\'s Awards for Enterprise, in the International Trade category.',
@@ -352,7 +470,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://www.kbbreview.com/22981/topstory/devol-opens-showroom-in-new-york/',
         undefined,
       ),
-    ],
+    ], { statedName: 'deVOL Kitchens', statedGeography: { country: 'United Kingdom', town: 'Loughborough' }, statedIndustry: 'handmade kitchens and interiors' }),
     inferences: [
       inference(
         'devol-i1',
@@ -396,7 +514,13 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'award_international_trade',
     whatChanged:
       'Recognised in the 2026 King\'s Awards for Enterprise for International Trade, as an EPCF infrastructure developer delivering turnkey projects in Sub-Saharan Africa.',
-    facts: [
+    polarity: 'demand_increasing',
+    consequence: {
+      actionable: true,
+      rationale:
+        'Project cargo to Sub-Saharan Africa, though logistics may be in-house.',
+    },
+    facts: withAttribution([
       fact(
         'nms-f1',
         'NMS International Group is among six Leicestershire recipients of the 2026 King\'s Awards for Enterprise, in the International Trade category.',
@@ -409,9 +533,9 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://www.nmsinfrastructure.com/contact',
         undefined,
         undefined,
-        'nmsinfrastructure.com',
+        ['nmsinfrastructure.com'],
       ),
-    ],
+    ], { statedName: 'NMS International Group', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'turnkey infrastructure development' }),
     inferences: [
       inference(
         'nms-i1',
@@ -458,14 +582,20 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'relocation',
     whatChanged:
       'Moved to a 73,000 sq ft headquarters on Long Lane, Kegworth — an event search surfaces as though current.',
-    facts: [
+    polarity: 'demand_reducing',
+    consequence: {
+      actionable: false,
+      rationale:
+        'Export volumes are contracting and cost is being cut: freight demand is falling, so there is nothing here for this client to sell into. A cost-reduction vendor would read this differently.',
+    },
+    facts: withAttribution([
       fact(
         'slackparr-f1',
         'Slack & Parr moved into a new 73,000 sq ft headquarters on Long Lane, Kegworth, representing roughly £4.5m of investment, fully operational since February 2021.',
         'https://www.thebusinessdesk.com/eastmidlands/news/2047181-multimillion-pound-loan-sees-manufacturer-move-to-new-hq',
         '2020-11-01',
       ),
-    ],
+    ], { statedName: 'Slack & Parr', statedGeography: { country: 'United Kingdom', town: 'Kegworth' }, statedIndustry: 'precision pump manufacturing' }),
     inferences: [
       inference(
         'slackparr-i1',
@@ -495,14 +625,20 @@ export const pilotAExtractions: ExtractionCorpus = {
   'bleckmann.com': {
     trigger: 'new_premises',
     whatChanged: 'Opening a new mega distribution centre in Lutterworth, Leicestershire.',
-    facts: [
+    polarity: 'neutral',
+    consequence: {
+      actionable: false,
+      rationale:
+        'A competitor expanding is not a commercial consequence for this client.',
+    },
+    facts: withAttribution([
       fact(
         'bleckmann-f1',
         'Bleckmann, a supply chain management specialist for fashion and lifestyle brands, is opening a new mega distribution centre in Lutterworth, Leicestershire.',
         'https://ww.fashionnetwork.com/news/Bleckmann-to-open-another-giant-distribution-centre-in-uk,1825515.html',
         '2026-06-01',
       ),
-    ],
+    ], { statedName: 'Bleckmann', statedGeography: { country: 'United Kingdom', town: 'Lutterworth' }, statedIndustry: 'third-party logistics' }),
     inferences: [],
     hypothesis: hypothesis(
       'bleckmann-h1',
@@ -527,14 +663,20 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'new_premises',
     whatChanged:
       'Opened a £500m, 1.3m sq ft distribution centre at Bardon, Leicestershire — the UK\'s largest supermarket warehouse.',
-    facts: [
+    polarity: 'neutral',
+    consequence: {
+      actionable: false,
+      rationale:
+        'Enterprise retailer with its own network — no consequence this client can serve.',
+    },
+    facts: withAttribution([
       fact(
         'aldi-f1',
         'Aldi has invested more than £500m in a 1.3m sq ft distribution centre at Bardon, Leicestershire, employing around 1,000 people and serving nearly 350 stores.',
         'https://www.eastmidlandsbusinesslink.co.uk/mag/news/aldi-invests-500m-in-leicestershire-to-establish-britains-largest-supermarket-warehouse/',
         '2026-07-01',
       ),
-    ],
+    ], { statedName: 'Aldi', statedGeography: { country: 'United Kingdom', town: 'Bardon' }, statedIndustry: 'grocery retail' }),
     inferences: [],
     hypothesis: hypothesis(
       'aldi-h1',

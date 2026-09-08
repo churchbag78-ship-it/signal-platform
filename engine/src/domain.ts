@@ -53,14 +53,81 @@ export interface CompanyIdentity {
   name: string;
   /** Identity key. Never match companies on name alone. */
   domain: string;
-  /**
-   * Other domains the same company owns — country TLDs, former names, brand
-   * sites. Without these a company's own .co.uk site is indistinguishable
-   * from a stranger's, which costs it first-party source standing.
-   */
-  aliasDomains?: string[];
   location?: string;
   industry?: string;
+}
+
+/** How an alias domain came to be trusted. Provenance is never discarded. */
+export type AliasVerification = 'human' | 'first_party_link' | 'public_record' | 'unverified';
+
+export interface AliasDomain {
+  domain: string;
+  /** What establishes that this domain is the same company. */
+  evidence: string;
+  sourceUrl?: string;
+  verifiedAt?: IsoDate;
+  verifiedBy: AliasVerification;
+}
+
+export interface Geography {
+  country?: string;
+  region?: string;
+  town?: string;
+}
+
+/**
+ * Everything known that distinguishes this company from a same-named one.
+ * Identity is an invariant of the pipeline, not a search-query optimisation:
+ * no claim enters the evidence corpus until it is attributed to a fingerprint.
+ */
+export interface IdentityFingerprint {
+  canonicalName: string;
+  canonicalDomain: string;
+  aliasDomains?: AliasDomain[];
+  /** Trading names, brands and former names. */
+  tradingNames?: string[];
+  geography?: Geography;
+  industry?: string;
+  /** Distinguishing words: "gear pumps", "technical textiles", "fine food". */
+  descriptors?: string[];
+  /** Companies House number or equivalent registry identifier. */
+  companyNumber?: string;
+  /** Declared subsidiaries — a source about one attributes to this identity. */
+  subsidiaries?: string[];
+  /** Declared parent. A source about the parent does NOT attribute here. */
+  parent?: string;
+}
+
+/** What a source appears to be about, read from its title, snippet and URL. */
+export interface SourceAttribution {
+  url: string;
+  statedName?: string;
+  statedDomain?: string;
+  statedGeography?: Geography;
+  statedIndustry?: string;
+  statedDescriptors?: string[];
+  statedCompanyNumber?: string;
+}
+
+export type IdentityStatus = 'match' | 'identity_collision' | 'unresolved';
+
+export interface IdentityVerdict {
+  status: IdentityStatus;
+  /** 0-1. Confidence in the attribution, not in the claim itself. */
+  confidence: number;
+  corroborations: string[];
+  conflicts: string[];
+  explanation: string;
+}
+
+/** Derives the pipeline's lightweight identity from a full fingerprint. */
+export function toCompanyIdentity(fingerprint: IdentityFingerprint): CompanyIdentity {
+  return {
+    name: fingerprint.canonicalName,
+    domain: normalizeDomain(fingerprint.canonicalDomain),
+    ...(fingerprint.geography?.town ? { location: fingerprint.geography.town } : {}),
+    ...(fingerprint.industry ? { industry: fingerprint.industry } : {}),
+  };
 }
 
 export interface Signal {
@@ -100,6 +167,10 @@ export interface Fact {
   /** When we found out about it. Never a substitute for eventDate. */
   discoveredAt: IsoDate;
   verification: Verification;
+  /** What the source appears to be about — the input to identity checking. */
+  attribution?: SourceAttribution;
+  /** Whether this source was confirmed to speak for the target company. */
+  identity?: IdentityVerdict;
 }
 
 export interface Inference {

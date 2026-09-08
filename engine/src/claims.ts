@@ -201,3 +201,35 @@ export function factsToEvidence(facts: Fact[]) {
 }
 
 export type { Fact, Inference, Hypothesis };
+
+/**
+ * Removes claims by id and cascades: any inference or hypothesis left with no
+ * surviving parent is removed too. Used when a fact is rejected on identity —
+ * conclusions drawn from a source that turned out to be about a different
+ * company must not survive it.
+ */
+export function pruneChain(claims: Claim[], removeIds: Set<string>): Claim[] {
+  let surviving = claims.filter((c) => !removeIds.has(c.id));
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    const present = new Set(surviving.map((c) => c.id));
+
+    const next = surviving.filter((claim) => {
+      if (isFact(claim)) return true;
+      const parents = claim.derivedFrom.filter((id) => present.has(id));
+      return parents.length > 0;
+    });
+
+    if (next.length !== surviving.length) changed = true;
+
+    surviving = next.map((claim) => {
+      if (isFact(claim)) return claim;
+      const parents = claim.derivedFrom.filter((id) => present.has(id));
+      return parents.length === claim.derivedFrom.length ? claim : { ...claim, derivedFrom: parents };
+    });
+  }
+
+  return surviving;
+}

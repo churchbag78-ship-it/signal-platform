@@ -9,7 +9,7 @@
  */
 
 import { orbitalDirect, pilotATargets } from '../fixtures/pilot-a.ts';
-import { liveCapture, liveExtractions } from '../fixtures/pilot-a-live.ts';
+import { liveCaptureV2, liveExtractionsV2 } from '../fixtures/pilot-a-live-v2.ts';
 import { AgentBridgeSearchClient } from '../src/research/agent-bridge.ts';
 import { CorpusClaimExtractor } from '../src/research/corpus.ts';
 import { WebResearchAdapter } from '../src/research/adapter.ts';
@@ -23,7 +23,7 @@ const RUN_DATE = '2026-09-08';
 const REPORTABLE_FLOOR = 60;
 
 /** Cheap screen before any search: never spend research on a disqualified company. */
-function prescreen(company: CompanyIdentity, client: ClientProfile): string | null {
+function prescreen(company: CompanyIdentity, _client: ClientProfile): string | null {
   const disqualified: Record<string, string> = {
     'bleckmann.com': 'third-party logistics provider — a competitor',
     'aldi.co.uk': 'enterprise retailer running its own distribution network',
@@ -32,16 +32,14 @@ function prescreen(company: CompanyIdentity, client: ClientProfile): string | nu
   return reason ? `${reason}; matches client disqualifier list` : null;
 }
 
-const search = new AgentBridgeSearchClient(liveCapture);
+const search = new AgentBridgeSearchClient(liveCaptureV2);
 
 const adapter = new WebResearchAdapter({
   search,
-  extractor: new CorpusClaimExtractor(liveExtractions),
+  extractor: new CorpusClaimExtractor(liveExtractionsV2),
   targets: pilotATargets,
   runDate: RUN_DATE,
   maxQueriesPerCompany: 2,
-  // The capture predates the disambiguation fix, so replay with it off.
-  disambiguateQueries: false,
   prescreen,
 });
 
@@ -67,11 +65,11 @@ for (const query of search.queriesRequested) {
 
 const line = (char = '─') => console.log(char.repeat(78));
 
-console.log('\nSIGNAL — PILOT A (LIVE RESEARCH)');
+console.log('\nSIGNAL — PILOT A v2 (LIVE RESEARCH, IDENTITY-HARDENED)');
 line('═');
 console.log(`CLIENT:              ${orbitalDirect.name}`);
 console.log(`DATE:                ${RUN_DATE}`);
-console.log(`TRANSPORT:           ${liveCapture.transport}`);
+console.log(`TRANSPORT:           ${liveCaptureV2.transport}`);
 console.log(`COMPANIES IN SCOPE:  ${pilotATargets.length}`);
 console.log(`QUERIES EXECUTED:    ${search.queriesRequested.length}`);
 console.log(`PROVIDER CREDITS:    ${ledger.totalCredits()}`);
@@ -127,6 +125,26 @@ for (const drop of result.dropped) {
   console.log(`\n  ${drop.company.name} [${drop.stage}]`);
   console.log(`    ${drop.reason}`);
 }
+
+console.log('\n\nIDENTITY GATE');
+line('═');
+let gateRejections = 0;
+for (const signal of adapter.signals()) {
+  for (const rejection of signal.identityRejections) {
+    gateRejections += 1;
+    console.log(`  ${signal.company.name}: REJECTED ${rejection.url}`);
+    console.log(`    [${rejection.status}] ${rejection.explanation}`);
+  }
+}
+for (const rejection of adapter.rejections()) {
+  for (const item of rejection.identityRejections ?? []) {
+    gateRejections += 1;
+    console.log(`  ${rejection.company.name}: REJECTED ${item.url}`);
+    console.log(`    [${item.status}] ${item.explanation}`);
+  }
+}
+const acceptedSources = adapter.signals().reduce((a, s) => a + s.facts.length, 0);
+console.log(`\n  sources accepted: ${acceptedSources} · rejected on identity: ${gateRejections}`);
 
 console.log('\n\nSOURCES USED');
 line('═');

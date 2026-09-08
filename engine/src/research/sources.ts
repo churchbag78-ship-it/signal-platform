@@ -118,10 +118,14 @@ function matchesSet(host: string, set: Set<string>): boolean {
   return [...set].some((entry) => host.endsWith(`.${entry}`));
 }
 
+/**
+ * @param ownedDomains every domain the company is known to own — its canonical
+ * domain plus VERIFIED aliases. Unverified aliases must never be passed here:
+ * a similar-looking domain is not evidence of ownership.
+ */
 export function classifySource(
   url: string,
-  companyDomain?: string,
-  aliasDomains: string[] = [],
+  ownedDomains: string[] = [],
 ): Classification {
   const host = hostOf(url);
 
@@ -129,8 +133,7 @@ export function classifySource(
     return { tier: 5, type: 'unknown', publisher: 'unknown', needsReview: true };
   }
 
-  const owned = [companyDomain, ...aliasDomains].filter((d): d is string => Boolean(d));
-  for (const candidate of owned) {
+  for (const candidate of ownedDomains) {
     const own = normalizeDomain(candidate);
     if (own && (host === own || host.endsWith(`.${own}`))) {
       return { tier: 1, type: 'first_party', publisher: host, needsReview: false };
@@ -163,11 +166,10 @@ export function classifySource(
 
 export function toSource(
   url: string,
-  companyDomain?: string,
+  ownedDomains: string[] = [],
   originId?: string,
-  aliasDomains: string[] = [],
 ): Source {
-  const classification = classifySource(url, companyDomain, aliasDomains);
+  const classification = classifySource(url, ownedDomains);
   return {
     url,
     tier: classification.tier,

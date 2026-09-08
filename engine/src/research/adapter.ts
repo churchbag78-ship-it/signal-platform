@@ -33,6 +33,18 @@ export interface WebResearchOptions {
   runDate: IsoDate;
   /** Queries per company. Kept small — search is the expensive part. */
   maxQueriesPerCompany?: number;
+  /**
+   * Append a location/industry qualifier to every query. Defaults to true.
+   * Set false only to replay a capture taken before the fix.
+   */
+  disambiguateQueries?: boolean;
+  /**
+   * Optional cheap screen run BEFORE any search. Returning a reason rejects
+   * the company without spending a single query. Purely a cost control: it
+   * can only reject on what the client profile already disqualifies, never
+   * decide that something is an opportunity.
+   */
+  prescreen?: (company: CompanyIdentity, client: ClientProfile) => string | null;
 }
 
 /**
@@ -44,15 +56,28 @@ export function buildQueries(
   company: CompanyIdentity,
   client: ClientProfile,
   limit = 4,
+  options: { disambiguate?: boolean } = {},
 ): string[] {
   const name = company.name;
+
+  // A bare company name collides with same-named businesses worldwide. The
+  // live Pilot A run lost 3 of 7 companies this way: "Bramble Group" returned
+  // Brambles Ltd (CHEP pallets, Australia), "NMS" returned a Chinese mining
+  // equipment maker, and "Slack & Parr" returned academic papers about slack
+  // resources. Every query carries a disambiguator by default.
+  const qualifier = options.disambiguate === false
+    ? ''
+    : ` ${company.location ?? company.industry ?? ''}`.trimEnd();
+
+  const tidy = (query: string) => query.replace(/\s+/g, ' ').trim();
+
   const queries = [
     // What changed, generally and recently.
-    `${name} ${company.location ?? ''} news announcement expansion contract`.replace(/\s+/g, ' ').trim(),
+    tidy(`${name} ${company.location ?? ''} news announcement expansion contract`),
     // Client-specific triggers: the signal model, not a generic list.
-    ...client.demandTriggers.map((trigger) => `${name} ${trigger}`),
+    ...client.demandTriggers.map((trigger) => tidy(`${name}${qualifier} ${trigger}`)),
     // The contradiction pass has to be a query too, or it never happens.
-    `${name} administration closure delayed cancelled loss`,
+    tidy(`${name}${qualifier} administration closure delayed cancelled loss`),
   ];
 
   return queries.slice(0, limit);
@@ -99,10 +124,25 @@ export class WebResearchAdapter implements ResearchAdapter {
     }
 
     const identified: CompanyIdentity = { ...company, domain };
+
+    const prescreenReason = this.#options.prescreen?.(identified, client);
+    if (prescreenReason) {
+      return {
+        outcome: 'no_signal',
+        rejection: {
+          company: identified,
+          stage: 'icp',
+          reason: `${prescreenReason} (rejected before search — no research spent)`,
+          queriesRun: [],
+        },
+      };
+    }
+
     const queries = buildQueries(
       identified,
       client,
       this.#options.maxQueriesPerCompany ?? 4,
+      { disambiguate: this.#options.disambiguateQueries ?? true },
     );
 
     const results = [];

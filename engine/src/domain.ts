@@ -53,6 +53,12 @@ export interface CompanyIdentity {
   name: string;
   /** Identity key. Never match companies on name alone. */
   domain: string;
+  /**
+   * Other domains the same company owns — country TLDs, former names, brand
+   * sites. Without these a company's own .co.uk site is indistinguishable
+   * from a stranger's, which costs it first-party source standing.
+   */
+  aliasDomains?: string[];
   location?: string;
   industry?: string;
 }

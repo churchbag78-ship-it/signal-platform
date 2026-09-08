@@ -118,16 +118,21 @@ function matchesSet(host: string, set: Set<string>): boolean {
   return [...set].some((entry) => host.endsWith(`.${entry}`));
 }
 
-export function classifySource(url: string, companyDomain?: string): Classification {
+export function classifySource(
+  url: string,
+  companyDomain?: string,
+  aliasDomains: string[] = [],
+): Classification {
   const host = hostOf(url);
 
   if (!host) {
     return { tier: 5, type: 'unknown', publisher: 'unknown', needsReview: true };
   }
 
-  if (companyDomain) {
-    const own = normalizeDomain(companyDomain);
-    if (host === own || host.endsWith(`.${own}`)) {
+  const owned = [companyDomain, ...aliasDomains].filter((d): d is string => Boolean(d));
+  for (const candidate of owned) {
+    const own = normalizeDomain(candidate);
+    if (own && (host === own || host.endsWith(`.${own}`))) {
       return { tier: 1, type: 'first_party', publisher: host, needsReview: false };
     }
   }
@@ -156,8 +161,13 @@ export function classifySource(url: string, companyDomain?: string): Classificat
   return { tier: 4, type: 'unknown', publisher: host, needsReview: true };
 }
 
-export function toSource(url: string, companyDomain?: string, originId?: string): Source {
-  const classification = classifySource(url, companyDomain);
+export function toSource(
+  url: string,
+  companyDomain?: string,
+  originId?: string,
+  aliasDomains: string[] = [],
+): Source {
+  const classification = classifySource(url, companyDomain, aliasDomains);
   return {
     url,
     tier: classification.tier,

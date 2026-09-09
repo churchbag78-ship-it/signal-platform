@@ -76,8 +76,8 @@ export function applicableCaps(
 ): AppliedCap[] {
   const caps: AppliedCap[] = [];
 
-  if (evidence.verification === 'search_summary_only') {
-    caps.push({ cap: 70, reason: 'sources not opened (search summary only)' });
+  if (evidence.verification === 'search_snippet') {
+    caps.push({ cap: 70, reason: 'evidence is search-snippet level; no page was retrieved and verified' });
   }
   if (evidence.independentSources <= 1 && evidence.bestTier === 3) {
     caps.push({ cap: 75, reason: 'single trade-press source' });
@@ -105,7 +105,7 @@ function confidenceCeiling(
     return 'Low';
   }
   if (
-    evidence.verification === 'search_summary_only' ||
+    evidence.verification === 'search_snippet' ||
     !evidence.hasDate ||
     evidence.independentSources <= 1
   ) {

@@ -117,10 +117,10 @@ export function recommendAction(
       rationale: 'conflicting evidence must be resolved by a person before contact',
     };
   }
-  if (score.evidence.verification === 'search_summary_only') {
+  if (score.evidence.verification === 'search_snippet') {
     return {
       action: 'research_further',
-      rationale: 'sources have not been opened; verify before contacting',
+      rationale: 'evidence is snippet-level; retrieve and verify the pages before contacting',
     };
   }
   if (!role) {

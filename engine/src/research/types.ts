@@ -19,6 +19,7 @@ import type {
 } from '../domain.ts';
 import type { ClientProfile } from '../pipeline.ts';
 import type { ExtractedClaim, SignalPolarity } from './extraction.ts';
+import type { VerificationResult } from './retrieval.ts';
 import type { ScoreJudgements } from '../scoring.ts';
 import type { FreshnessResult } from '../freshness.ts';
 
@@ -113,6 +114,8 @@ export interface ResearchSignal {
   polarityRationale: string;
   /** Warnings where the declared polarity disagrees with the evidence. */
   polarityWarnings: string[];
+  /** Per-source verification outcomes: what each claim's evidence earned. */
+  verifications: VerificationResult[];
   consequence: CommercialConsequence;
   /** Sources dropped before the corpus, on identity grounds. */
   identityRejections: { url: string; status: string; explanation: string }[];

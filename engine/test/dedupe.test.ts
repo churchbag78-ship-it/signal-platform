@@ -22,7 +22,7 @@ function candidate(domain: string, signalType: string, signalDate?: string): Can
           source: { url: 'https://example.com/a', tier: 3, publisher: 'Example' },
           signalDate,
           retrievedAt: '2026-09-08',
-          verification: 'sources_opened',
+          verification: 'page_retrieved',
         },
       ],
     },

@@ -25,6 +25,7 @@ import {
 } from '../claims.ts';
 import { ownedDomains } from '../identity.ts';
 import { promoteToFact, validatePolarity } from './extraction.ts';
+import { verifyClaimPassage, NullPageRetriever, type PageRetriever, type VerificationResult } from './retrieval.ts';
 import { assessFreshness } from '../freshness.ts';
 import { assessEvidence } from '../evidence.ts';
 import type { ClientProfile, ResearchAdapter } from '../pipeline.ts';
@@ -56,6 +57,13 @@ export interface WebResearchOptions {
    * decide that something is an opportunity.
    */
   prescreen?: (company: CompanyIdentity, client: ClientProfile) => string | null;
+  /**
+   * Fetches the page behind a claim so its supporting passage can be checked
+   * against the real body. Defaults to a retriever that declares itself
+   * blocked, which leaves every claim at snippet level — never promoted by
+   * default, and never silently.
+   */
+  retriever?: PageRetriever;
 }
 
 /**
@@ -110,7 +118,7 @@ export function deriveEvidenceQuality(claims: Claim[], hypothesisId: string): nu
 
   const tierPoints = { 1: 11, 2: 10, 3: 7, 4: 3, 5: 1 }[assessment.bestTier] ?? 1;
   const independencePoints = Math.min(3, Math.max(0, assessment.independentSources - 1));
-  const verificationPoints = assessment.verification === 'sources_opened' ? 1 : 0;
+  const verificationPoints = assessment.verification === 'page_retrieved' ? 1 : 0;
 
   return Math.min(15, tierPoints + independencePoints + verificationPoints);
 }
@@ -195,6 +203,25 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
+    // --- VERIFICATION -----------------------------------------------------
+    // search result -> retrieved page -> extractor -> classification ->
+    // identity gate -> Fact. A claim earns `page_retrieved` only when the page
+    // was fetched AND its supporting passage was found in the body. Anything
+    // else stays at snippet level with the reason recorded.
+    const retriever = this.#options.retriever ?? new NullPageRetriever();
+    const verifications: VerificationResult[] = [];
+    const verifiedClaims = [];
+
+    for (const extractedClaim of extraction.claims) {
+      const verification = await verifyClaimPassage(
+        extractedClaim.sourceUrl,
+        extractedClaim.supportingPassage,
+        retriever,
+      );
+      verifications.push(verification);
+      verifiedClaims.push({ ...extractedClaim, verification: verification.level });
+    }
+
     // --- CLAIM PROMOTION AND IDENTITY GATE -------------------------------
     // Extractors produce structured claims, never Facts. Each claim is
     // schema-validated, its source classified in the context of the claim's
@@ -206,7 +233,7 @@ export class WebResearchAdapter implements ResearchAdapter {
     const claimErrors: string[] = [];
     let collisions = 0;
 
-    for (const extractedClaim of extraction.claims) {
+    for (const extractedClaim of verifiedClaims) {
       const outcome = promoteToFact(extractedClaim, target, this.#options.runDate);
 
       if (outcome.status === 'promoted') {
@@ -264,7 +291,7 @@ export class WebResearchAdapter implements ResearchAdapter {
     // than trusted. Warnings travel with the signal; they do not silently
     // rewrite it.
     const polarityCheck = validatePolarity(
-      extraction.claims.filter((c) => !rejectedIds.has(c.id)),
+      verifiedClaims.filter((c) => !rejectedIds.has(c.id)),
       extraction.polarity,
       extraction.polarityRationale,
     );
@@ -370,6 +397,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       polarity: extraction.polarity,
       polarityRationale: extraction.polarityRationale,
       polarityWarnings: polarityCheck.warnings,
+      verifications,
       consequence: extraction.consequence,
       identityRejections,
       claims,

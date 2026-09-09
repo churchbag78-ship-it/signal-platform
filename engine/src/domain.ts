@@ -17,8 +17,18 @@ export type IsoDate = string;
  */
 export type SourceTier = 1 | 2 | 3 | 4 | 5;
 
-/** Whether the source page was actually opened, or only summarised. */
-export type Verification = 'sources_opened' | 'search_summary_only';
+/**
+ * How the evidence behind a claim was obtained.
+ *
+ * These are NOT interchangeable. A search snippet is a third party's summary of
+ * a page; a retrieved page is the page. The engine must never score one as the
+ * other, which is why the distinction is a type rather than a boolean.
+ *
+ *  - `page_retrieved` — the page was fetched and the supporting passage was
+ *    found in its body.
+ *  - `search_snippet` — only a search-engine summary was read.
+ */
+export type Verification = 'page_retrieved' | 'search_snippet';
 
 export type Confidence = 'High' | 'Medium' | 'Low';
 

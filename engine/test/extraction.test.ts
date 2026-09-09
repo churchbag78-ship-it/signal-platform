@@ -52,7 +52,7 @@ function claim(over: Partial<ExtractedClaim> = {}): ExtractedClaim {
       statedIndustry: 'technical textiles',
     },
     extractionConfidence: 0.9,
-    verification: 'search_summary_only',
+    verification: 'search_snippet',
     ...over,
   };
 }
@@ -309,14 +309,14 @@ test('a model claim is coerced into the schema and validated', () => {
       eventDate: '2026-07-20',
       identityAttributes: { statedName: 'Baltex', statedGeography: { town: 'Ilkeston' } },
       extractionConfidence: 0.9,
-      verification: 'sources_opened',
+      verification: 'page_retrieved',
     },
     0,
   );
 
   assert.ok(good);
   assert.equal(good!.topic, 'funding');
-  assert.equal(good!.verification, 'sources_opened');
+  assert.equal(good!.verification, 'page_retrieved');
 });
 
 test('a model claim with an unknown topic falls back rather than inventing one', () => {

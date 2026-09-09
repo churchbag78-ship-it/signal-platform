@@ -11,7 +11,9 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "pilot-a": "node scripts/pilot-a.ts",
-    "pilot-a-live": "node scripts/pilot-a-live.ts"
+    "pilot-a-live": "node scripts/pilot-a-live.ts",
+    "pilot-a-v4": "node scripts/pilot-a-v4.ts",
+    "fidelity": "node scripts/fidelity.ts"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

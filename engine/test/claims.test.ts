@@ -12,7 +12,7 @@ function fact(id: string, url = 'https://www.gov.uk/x'): Fact {
     source: { url, tier: 2, publisher: 'GOV.UK' },
     eventDate: '2026-08-01',
     discoveredAt: '2026-09-08',
-    verification: 'sources_opened',
+    verification: 'page_retrieved',
   };
 }
 

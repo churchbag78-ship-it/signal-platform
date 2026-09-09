@@ -12,7 +12,7 @@ function signal(dates: (string | undefined)[], structural = false): Signal {
     source: { url: `https://example.com/${i}`, tier: 3, publisher: 'Example' },
     signalDate: d,
     retrievedAt: RUN_DATE,
-    verification: 'sources_opened',
+    verification: 'page_retrieved',
   }));
   return { type: 'test', description: 'test', evidence, structural };
 }

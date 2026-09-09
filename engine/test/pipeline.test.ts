@@ -40,7 +40,7 @@ function candidate(
           source: { url: `https://gov.uk/${domain}`, tier: 2, publisher: 'GOV.UK' },
           signalDate,
           retrievedAt: RUN_DATE,
-          verification: 'sources_opened',
+          verification: 'page_retrieved',
         },
       ],
     },
@@ -256,7 +256,7 @@ test('recommended actions follow the state of the evidence', () => {
         ...base.signal,
         evidence: base.signal.evidence.map((e) => ({
           ...e,
-          verification: 'search_summary_only' as const,
+          verification: 'search_snippet' as const,
         })),
       },
     },

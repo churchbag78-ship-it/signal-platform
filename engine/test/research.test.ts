@@ -110,7 +110,7 @@ test('evidence quality rewards better tiers and genuine independence', () => {
     source: { url: `https://x.com/${id}`, tier: tier as 1, publisher: 'x', ...(originId ? { originId } : {}) },
     eventDate: '2026-08-01',
     discoveredAt: RUN_DATE,
-    verification: 'search_summary_only',
+    verification: 'search_snippet',
   });
 
   const hypothesis: Claim = {

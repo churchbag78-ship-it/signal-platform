@@ -66,7 +66,7 @@ For every claim you must supply:
   statedName, statedDomain, statedGeography {country, region, town},
   statedIndustry, statedDescriptors, statedCompanyNumber
 - extractionConfidence: 0-1, how sure you are you read the source correctly
-- verification: "sources_opened" if you read the page, "search_summary_only" if
+- verification: 'page_retrieved' if you read the page, 'search_snippet' if
   you only saw a search summary
 - originId: set the same value on claims that come from one press release
 
@@ -182,7 +182,7 @@ export function coerceClaim(raw: unknown, index: number): ExtractedClaim | null 
     },
     extractionConfidence: confidence,
     ...(str('originId') ? { originId: str('originId')! } : {}),
-    verification: record.verification === 'sources_opened' ? 'sources_opened' : 'search_summary_only',
+    verification: record.verification === 'page_retrieved' ? 'page_retrieved' : 'search_snippet',
   };
 
   return validateExtractedClaim(claim).valid ? claim : null;

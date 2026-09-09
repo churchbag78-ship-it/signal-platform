@@ -35,7 +35,7 @@ function fact(
     source: toSource(url, { ownedDomains }, originId),
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
-    verification: 'search_summary_only',
+    verification: 'search_snippet',
   };
 }
 

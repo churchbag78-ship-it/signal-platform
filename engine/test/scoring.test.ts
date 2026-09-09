@@ -17,7 +17,7 @@ function evidence(overrides: Partial<Evidence> = {}): Evidence {
     },
     signalDate: '2026-08-25',
     retrievedAt: RUN_DATE,
-    verification: 'sources_opened',
+    verification: 'page_retrieved',
     ...overrides,
   };
 }
@@ -62,13 +62,13 @@ test('score explanation shows every component, so a score can be argued with', (
   assert.match(joined, /= 93/);
 });
 
-test('unopened sources cap the score at 70 and hold confidence to Medium', () => {
+test('snippet-level evidence caps the score at 70 and holds confidence to Medium', () => {
   const result = scoreCandidate(
     candidate({
       signal: {
         type: 'new_premises',
         description: 'New facility',
-        evidence: [evidence({ verification: 'search_summary_only' })],
+        evidence: [evidence({ verification: 'search_snippet' })],
       },
     }),
     strongJudgements,
@@ -76,7 +76,7 @@ test('unopened sources cap the score at 70 and hold confidence to Medium', () =>
   );
 
   assert.equal(result.total, 70);
-  assert.ok(result.appliedCaps.some((c) => c.reason.includes('not opened')));
+  assert.ok(result.appliedCaps.some((c) => c.reason.includes('search-snippet level')));
   assert.equal(result.confidence, 'Medium');
 });
 
@@ -205,7 +205,7 @@ test('the lowest applicable cap wins when several apply', () => {
     evidence({
       source: { url: 'https://directory.example/listing', tier: 4, publisher: 'D' },
       signalDate: undefined,
-      verification: 'search_summary_only',
+      verification: 'search_snippet',
     }),
   ];
 

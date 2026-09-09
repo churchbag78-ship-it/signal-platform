@@ -16,7 +16,7 @@ export interface EvidenceAssessment {
   independentSources: number;
   hasDate: boolean;
   /**
-   * 'sources_opened' only when at least one piece of evidence AT THE BEST TIER
+   * 'page_retrieved' only when at least one piece of evidence AT THE BEST TIER
    * was actually opened. Opening a weak secondary does not verify a claim that
    * rests on an unopened primary.
    */
@@ -29,7 +29,7 @@ export function assessEvidence(evidence: Evidence[]): EvidenceAssessment {
       bestTier: 5,
       independentSources: 0,
       hasDate: false,
-      verification: 'search_summary_only',
+      verification: 'search_snippet',
     };
   }
 
@@ -46,13 +46,13 @@ export function assessEvidence(evidence: Evidence[]): EvidenceAssessment {
   );
 
   const bestTierOpened = evidence.some(
-    (e) => e.source.tier === bestTier && e.verification === 'sources_opened',
+    (e) => e.source.tier === bestTier && e.verification === 'page_retrieved',
   );
 
   return {
     bestTier,
     independentSources: origins.size,
     hasDate,
-    verification: bestTierOpened ? 'sources_opened' : 'search_summary_only',
+    verification: bestTierOpened ? 'page_retrieved' : 'search_snippet',
   };
 }

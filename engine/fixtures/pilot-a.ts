@@ -157,7 +157,7 @@ function fact(
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
     // Page fetching was blocked; nothing in this corpus was opened at source.
-    verification: 'search_summary_only',
+    verification: 'search_snippet',
   };
 }
 

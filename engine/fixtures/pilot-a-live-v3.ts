@@ -53,7 +53,7 @@ function claim(input: ClaimInput): ExtractedClaim {
     extractionConfidence: input.confidence,
     ...(input.originId ? { originId: input.originId } : {}),
     // Page fetching remains blocked by the egress policy.
-    verification: 'search_summary_only',
+    verification: 'search_snippet',
   };
 }
 

@@ -599,6 +599,39 @@ console.log(
 reportAxes('TWO-AXIS — page retrieval blocked (the honest state)', twoAxisUnverified, evalTwoAxisUnverified);
 reportAxes('TWO-AXIS — reconstructed verification', twoAxisRun, evalTwoAxis);
 
+console.log('\n\nDEMAND DIRECTION — derived from evidence, not from the declared label');
+line('═');
+console.log(
+  `  ${'company'.padEnd(24)}${'declared'.padEnd(20)}${'grounded'.padEnd(20)}${'points'.padEnd(8)}agrees`,
+);
+for (const signal of twoAxisRun.adapter.signals()) {
+  const opportunity = twoAxisRun.result.opportunities.find(
+    (o) => o.company.domain === signal.company.domain,
+  );
+  const points = opportunity?.axes?.value.components.demandDirection;
+  console.log(
+    `  ${signal.company.name.padEnd(24)}${signal.declaredPolarity.padEnd(20)}` +
+      `${signal.polarity.padEnd(20)}${String(points ?? '—').padEnd(8)}${signal.direction.supported ? 'yes' : 'NO'}`,
+  );
+  if (!signal.direction.supported) {
+    console.log(`      ${signal.direction.rationale}`);
+  }
+  if (signal.direction.ignored.length > 0) {
+    console.log(
+      `      ignored, not an Orbital offering: ${signal.direction.ignored.map((i) => i.offering).join(', ')}`,
+    );
+  }
+}
+const ungrounded = twoAxisRun.adapter
+  .signals()
+  .filter((s) => !s.direction.supported).length;
+console.log(
+  `\n  ${ungrounded} of ${twoAxisRun.adapter.signals().length} signals declared a direction the evidence does not support.`,
+);
+console.log(
+  '  Offerings the evidence says gain and lose, per signal, are in the run record.',
+);
+
 console.log('\n\nSINGLE AXIS vs TWO AXES — the same run, scored both ways');
 line('═');
 console.log(

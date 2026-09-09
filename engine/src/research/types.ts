@@ -23,6 +23,7 @@ import type { VerificationResult } from './retrieval.ts';
 import type { ScoreJudgements } from '../scoring.ts';
 import type { FreshnessResult } from '../freshness.ts';
 import type { ResearchCoverage } from './history.ts';
+import type { DirectionAssessment } from '../direction.ts';
 
 export type { SignalPolarity };
 
@@ -111,7 +112,15 @@ export interface ResearchSignal {
   whatChanged: string;
   eventDate?: IsoDate;
   discoveredAt: IsoDate;
+  /**
+   * The direction the EVIDENCE supports, derived by the engine from per-claim
+   * demand impacts. This is what scoring reads.
+   */
   polarity: SignalPolarity;
+  /** What the extractor declared, kept for comparison. */
+  declaredPolarity: SignalPolarity;
+  /** How the grounded direction was reached, and what was ignored. */
+  direction: DirectionAssessment;
   polarityRationale: string;
   /** Warnings where the declared polarity disagrees with the evidence. */
   polarityWarnings: string[];

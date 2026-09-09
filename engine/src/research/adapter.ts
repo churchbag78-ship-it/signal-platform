@@ -27,6 +27,7 @@ import { ownedDomains } from '../identity.ts';
 import { promoteToFact, validatePolarity } from './extraction.ts';
 import { verifyClaimPassage, NullPageRetriever, type PageRetriever, type VerificationResult } from './retrieval.ts';
 import { assessFreshness } from '../freshness.ts';
+import { assessDirection, type DirectionAssessment } from '../direction.ts';
 import { assessEvidence } from '../evidence.ts';
 import type { ClientProfile, ResearchAdapter } from '../pipeline.ts';
 import type { ScoreJudgements } from '../scoring.ts';
@@ -442,11 +443,18 @@ export class WebResearchAdapter implements ResearchAdapter {
     // Polarity is an extracted judgement, checked against the evidence rather
     // than trusted. Warnings travel with the signal; they do not silently
     // rewrite it.
+    const survivingClaims = verifiedClaims.filter((c) => !rejectedIds.has(c.id));
+
     const polarityCheck = validatePolarity(
-      verifiedClaims.filter((c) => !rejectedIds.has(c.id)),
+      survivingClaims,
       extraction.polarity,
       extraction.polarityRationale,
     );
+
+    // Direction is DERIVED from the per-claim demand impacts, not taken from
+    // the declared label. Only claims that survived the identity gate count,
+    // so a source about a different company cannot set the direction.
+    const direction = assessDirection(survivingClaims, client, extraction.polarity);
 
     const fullChain: Claim[] = [...accepted, ...extraction.inferences, extraction.hypothesis];
     // Conclusions drawn from a rejected source must not outlive it.
@@ -539,6 +547,21 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
+    // A declared direction the evidence does not support is a contradiction in
+    // the signal, recorded where a reader will see it rather than buried in a
+    // warnings array.
+    const signalContradictions = direction.supported
+      ? extraction.contradictions
+      : [
+          ...extraction.contradictions,
+          {
+            severity: 'caveat' as const,
+            note:
+              `Declared as ${direction.declared}, but ${direction.rationale}. ` +
+              'Scored on the grounded direction.',
+          },
+        ];
+
     const eventDate = evidence
       .map((e) => e.signalDate)
       .filter((d): d is IsoDate => typeof d === 'string')
@@ -551,9 +574,11 @@ export class WebResearchAdapter implements ResearchAdapter {
       whatChanged: extraction.whatChanged,
       ...(eventDate ? { eventDate } : {}),
       discoveredAt: this.#options.runDate,
-      polarity: extraction.polarity,
+      polarity: direction.grounded,
+      declaredPolarity: extraction.polarity,
+      direction,
       polarityRationale: extraction.polarityRationale,
-      polarityWarnings: polarityCheck.warnings,
+      polarityWarnings: [...polarityCheck.warnings, ...direction.warnings],
       verifications,
       consequence: extraction.consequence,
       identityRejections,
@@ -563,7 +588,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       freshness,
       icpRelevance: extraction.icpRelevance,
       owningFunction: extraction.owningFunction,
-      contradictions: extraction.contradictions,
+      contradictions: signalContradictions,
       inferenceDepth: validation.depth,
       queriesRun: queries,
       coverage,
@@ -580,15 +605,13 @@ export class WebResearchAdapter implements ResearchAdapter {
       company,
       signal: signalShape,
       icpFitNotes: extraction.icpRelevance.rationale,
-      contradictions: extraction.contradictions,
+      contradictions: signalContradictions,
       inferenceSteps: validation.depth,
       decisionMakerRole: extraction.owningFunction,
       claims,
-      // Direction of the change travels with the candidate so scoring can ask
-      // whether it increases or decreases demand for this client. The polarity
-      // check has already run against the evidence; its warnings travel on the
-      // signal, and the declared polarity is what was validated.
-      polarity: extraction.polarity,
+      // The GROUNDED direction travels with the candidate, never the declared
+      // one. Scoring reads a value the engine derived from the evidence.
+      polarity: direction.grounded,
       consequenceActionable: extraction.consequence.actionable,
     };
 

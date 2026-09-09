@@ -69,6 +69,14 @@ For every claim you must supply:
 - verification: 'page_retrieved' if you read the page, 'search_snippet' if
   you only saw a search summary
 - originId: set the same value on claims that come from one press release
+- demandImpacts: how THIS CLAIM moves demand for the client's offerings, as a
+  list of {offering, effect, rationale}. Use the client's own wording for the
+  offering. effect is 'increases', 'reduces' or 'neutral'. Give one entry per
+  offering the claim actually bears on, and none where it bears on nothing.
+  Judge each offering separately: a company opening its own distribution centre
+  REDUCES demand for third-party warehousing while it may increase demand for
+  haulage, and both belong here. Do not record an effect the claim does not
+  support, and do not name an offering the client does not sell.
 
 You must NOT decide whether a source is about the target company. There is no
 field for that. Report what the source says about whichever company it
@@ -84,6 +92,10 @@ Separately from the claims, give:
 - whatChanged: one sentence
 - polarity: demand_increasing, demand_reducing or neutral FOR THIS CLIENT
 - polarityRationale: why, in one sentence. This is your judgement, not evidence.
+
+The engine derives the direction it scores from your per-claim demandImpacts,
+not from your polarity label. Your polarity is a cross-check: where the two
+disagree, the engine records the disagreement and scores the evidence.
 
 Return a single JSON object with keys: claims, trigger, whatChanged, polarity,
 polarityRationale. Return nothing else.`;

@@ -35,6 +35,21 @@ import { classifySource, type ClaimTopic } from './sources.ts';
  * One claim as read out of one source. This is the extractor's output unit —
  * structured evidence, never prose, and never a Fact.
  */
+/** How a change moves demand for one thing the client sells. */
+export type DemandEffect = 'increases' | 'reduces' | 'neutral';
+
+export interface OfferingImpact {
+  /**
+   * An offering as named in the client profile. One the client does not sell
+   * is ignored by the engine and warned about — a change cannot create demand
+   * for a service nobody offers.
+   */
+  offering: string;
+  effect: DemandEffect;
+  /** Read from the source, not inferred by the engine. */
+  rationale: string;
+}
+
 export interface ExtractedClaim {
   id: string;
   /** What the source states, quoted or closely paraphrased. */
@@ -59,6 +74,20 @@ export interface ExtractedClaim {
     statedDescriptors?: string[];
     statedCompanyNumber?: string;
   };
+  /**
+   * How this claim changes demand for the client's NAMED offerings.
+   *
+   * Extracted per claim, never per signal, because one change routinely helps
+   * one offering and hurts another — a company opening its own distribution
+   * hub buys itself out of third-party storage while creating outbound
+   * haulage. A single signal-level polarity label cannot say that, and the
+   * commercial benchmark caught the engine reporting exactly that case as
+   * demand-increasing.
+   *
+   * The extractor states the effect and its reason. The engine decides what
+   * the aggregate means; it does not accept a declared direction on trust.
+   */
+  demandImpacts?: OfferingImpact[];
   /** The extractor's own confidence that it read the source correctly, 0-1. */
   extractionConfidence: number;
   /** Syndication group: copies of one release share this and count as one. */
@@ -113,6 +142,24 @@ export function validateExtractedClaim(claim: ExtractedClaim): ClaimValidation {
   ] as const) {
     if (value !== undefined && Number.isNaN(Date.parse(value))) {
       errors.push(`claim "${claim.id}" has an unparseable ${field}`);
+    }
+  }
+
+  for (const impact of claim.demandImpacts ?? []) {
+    if (!impact.offering?.trim()) {
+      errors.push(`claim "${claim.id}" has a demand impact with no offering named`);
+    }
+    if (!['increases', 'reduces', 'neutral'].includes(impact.effect)) {
+      errors.push(
+        `claim "${claim.id}" has a demand impact with an unknown effect "${impact.effect}"`,
+      );
+    }
+    if (!impact.rationale?.trim()) {
+      // An effect without a reason is a label, and labels are what this
+      // contract exists to stop being taken on trust.
+      errors.push(
+        `claim "${claim.id}" declares a demand impact on "${impact.offering}" with no rationale`,
+      );
     }
   }
 

@@ -13,6 +13,7 @@
 
 import type { ExtractedClaim } from './extraction.ts';
 import { validatePolarity, type SignalPolarity } from './extraction.ts';
+import { matchOffering } from '../direction.ts';
 
 export type FidelityCategory =
   | 'missing_identity_attributes'
@@ -24,7 +25,11 @@ export type FidelityCategory =
   | 'hallucinated_claim'
   | 'passage_does_not_support_claim'
   | 'topic_misclassification'
-  | 'interpretation_not_extraction';
+  | 'interpretation_not_extraction'
+  /** A demand impact naming something the client does not sell. */
+  | 'demand_impact_offering_not_sold'
+  /** A demand impact with no rationale, or none declared at all. */
+  | 'ungrounded_demand_direction';
 
 export interface FidelityFinding {
   category: FidelityCategory;
@@ -41,6 +46,8 @@ export interface FidelityExpectation {
   expectedEventDates: string[];
   expectedTopics: string[];
   expectedPolarity: SignalPolarity;
+  /** The client's own offerings, so an impact can be checked against them. */
+  clientOfferings?: string[];
   /** Figures present in the source text, for hallucination detection. */
   sourceFigures: string[];
   claimCount: { min: number; max: number };
@@ -91,6 +98,18 @@ export function measureFidelity(
       category: 'hallucinated_claim',
       detail: `expected at most ${expectation.claimCount.max} claims, got ${claims.length} — ` +
         'excess claims are usually the same fact restated or invented',
+    });
+  }
+
+  if (
+    expectation.clientOfferings !== undefined &&
+    claims.every((claim) => (claim.demandImpacts ?? []).length === 0)
+  ) {
+    findings.push({
+      category: 'ungrounded_demand_direction',
+      detail:
+        'no claim states how the change moves demand for anything the client sells, ' +
+        'so the direction cannot be grounded in evidence',
     });
   }
 
@@ -229,6 +248,27 @@ export function measureFidelity(
   const byCategory: Partial<Record<FidelityCategory, number>> = {};
   for (const finding of findings) {
     byCategory[finding.category] = (byCategory[finding.category] ?? 0) + 1;
+  }
+
+  if (expectation.clientOfferings !== undefined) {
+    for (const claim of claims) {
+      for (const impact of claim.demandImpacts ?? []) {
+        if (matchOffering(impact.offering, expectation.clientOfferings) === null) {
+          findings.push({
+            category: 'demand_impact_offering_not_sold',
+            claimId: claim.id,
+            detail: `declares an impact on "${impact.offering}", which the client does not sell`,
+          });
+        }
+        if (!impact.rationale?.trim()) {
+          findings.push({
+            category: 'ungrounded_demand_direction',
+            claimId: claim.id,
+            detail: `declares an effect on "${impact.offering}" with no rationale`,
+          });
+        }
+      }
+    }
   }
 
   return {

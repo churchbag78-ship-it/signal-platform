@@ -926,6 +926,17 @@ export const liveCaptureV5: CaptureFile = {
   ]
 };
 
+/**
+ * Orbital's offerings, as the client profile words them. Impacts are declared
+ * against these and nothing else; the engine ignores and warns about any
+ * offering the client does not list.
+ */
+const FREIGHT = 'freight forwarding (air, road, sea)';
+const HAULAGE = 'same-day courier and UK haulage';
+const WAREHOUSING = 'warehousing, e-commerce fulfilment and FBA prep';
+const CUSTOMS = 'customs clearance and documentation';
+const PACKING = 'export packing and cargo insurance';
+
 interface ClaimInput {
   id: string;
   claimText: string;
@@ -937,6 +948,13 @@ interface ClaimInput {
   stated: ExtractedClaim['identityAttributes'];
   confidence: number;
   originId?: string;
+  /**
+   * How THIS claim moves demand for Orbital's offerings. Declared per claim
+   * and only where the claim's own text supports it — the engine derives the
+   * scored direction from the aggregate, and an undeclared direction scores as
+   * neutral rather than as growth.
+   */
+  impacts?: { offering: string; effect: 'increases' | 'reduces' | 'neutral'; rationale: string }[];
 }
 
 function claim(input: ClaimInput): ExtractedClaim {
@@ -949,6 +967,7 @@ function claim(input: ClaimInput): ExtractedClaim {
     ...(input.publicationDate ? { publicationDate: input.publicationDate } : {}),
     ...(input.eventDate ? { eventDate: input.eventDate } : {}),
     identityAttributes: input.stated,
+    ...(input.impacts ? { demandImpacts: input.impacts } : {}),
     extractionConfidence: input.confidence,
     ...(input.originId ? { originId: input.originId } : {}),
     verification: 'search_snippet',
@@ -1013,6 +1032,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, town: 'Coventry' },
           statedIndustry: 'electric motorbike manufacturing',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'Funded production capacity for named US and European markets means more outbound cross-border consignments.' },
+          { offering: CUSTOMS, effect: 'increases', rationale: 'More export consignments into the US, Germany and France means more export documentation.' },
+        ],
         confidence: 0.95,
         originId: 'ukef-maeving-release',
       }),
@@ -1031,6 +1054,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, town: 'Coventry' },
           statedIndustry: 'electric motorcycles',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'US sales up fivefold on a lane the company already ships means materially more consignments on it.' },
+          { offering: CUSTOMS, effect: 'increases', rationale: 'Tariff-driven disruption on an existing export lane increases the documentation burden.' },
+        ],
         confidence: 0.85,
       }),
       // NEW in v5 — surfaced by the major_contract family query. A separate
@@ -1117,6 +1144,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, town: 'Ilkeston' },
           statedIndustry: 'technical textiles',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'Funding explicitly supporting EU imports and exports across UK and Polish sites increases cross-border movements.' },
+        ],
         confidence: 0.85,
         originId: 'hsbc-baltex-release',
       }),
@@ -1135,6 +1165,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, town: 'Ilkeston' },
           statedIndustry: 'technical textiles',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'A newly targeted US market plus 20% export growth on a business already 60% export means more outbound consignments.' },
+          { offering: CUSTOMS, effect: 'increases', rationale: 'A first aerospace lane into the USA carries documentation and traceability requirements beyond ordinary export paperwork.' },
+        ],
         confidence: 0.85,
       }),
       // NEW in v5 — surfaced by the expansion family query. Same HSBC release,
@@ -1223,6 +1257,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire' },
           statedIndustry: 'kitchen manufacturing',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'Overseas revenue up 2,300% with 31% of sales exported means substantially more outbound international movements.' },
+          { offering: PACKING, effect: 'increases', rationale: 'Bulky fragile cabinetry shipped overseas has to be crated for export.' },
+        ],
         confidence: 0.9,
       }),
       // NEW in v5 — the first-party sweep reached deVOL's own journal on both
@@ -1240,6 +1278,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire' },
           statedIndustry: 'kitchen manufacturing and retail',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'Completed projects in 26 countries means consignments to many destinations rather than one lane.' },
+        ],
         confidence: 0.85,
       }),
       claim({
@@ -1254,6 +1295,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: 'Taiwan', town: 'Taipei' },
           statedIndustry: 'kitchen furniture',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'A product launch in Taipei implies consignments to a destination in Asia.' },
+        ],
         confidence: 0.6,
       }),
       claim({
@@ -1340,6 +1384,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
           statedIndustry: 'fine food manufacturing and distribution',
         },
+        impacts: [
+          { offering: WAREHOUSING, effect: 'reduces', rationale: 'A purpose-built main distribution hub that increases the company’s own warehousing and stockholding capacity reduces its need to buy storage.' },
+        ],
         confidence: 0.95,
       }),
       claim({
@@ -1373,6 +1420,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
           statedIndustry: 'food manufacturing and distribution',
         },
+        impacts: [
+          { offering: HAULAGE, effect: 'increases', rationale: 'A third base in the same town means goods moving between sites within Market Harborough.' },
+        ],
         confidence: 0.8,
       }),
       claim({
@@ -1475,6 +1525,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
           statedIndustry: 'infrastructure EPCF development',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'Twelve live construction sites in Sub-Saharan Africa means continuous outbound project cargo.' },
+          { offering: CUSTOMS, effect: 'increases', rationale: 'Cargo landing at African ports needs destination customs clearance and export documentation.' },
+        ],
         confidence: 0.9,
       }),
       claim({
@@ -1492,6 +1546,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
           statedIndustry: 'infrastructure development',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'increases', rationale: 'A record number of hospital completions means the programme is actively shipping.' },
+        ],
         confidence: 0.85,
       }),
       claim({
@@ -1509,6 +1566,10 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
           statedIndustry: 'infrastructure development',
         },
+        impacts: [
+          { offering: WAREHOUSING, effect: 'reduces', rationale: 'The company operates its own export warehouse next to its headquarters, so it does not buy third-party storage for this cargo.' },
+          { offering: PACKING, effect: 'reduces', rationale: 'An in-house NMSI Logistics team carries out pre-shipment testing and QC before containerisation.' },
+        ],
         confidence: 0.85,
       }),
     ],
@@ -1595,6 +1656,9 @@ export const liveExtractionsV5: ExtractionCorpus = {
           statedGeography: { country: UK, town: 'Kegworth' },
           statedIndustry: 'precision pump manufacturing',
         },
+        impacts: [
+          { offering: FREIGHT, effect: 'reduces', rationale: 'Slowing Chinese and Far East investment and tariffs in new export markets mean fewer outbound consignments.' },
+        ],
         confidence: 0.9,
       }),
       // NEW in v5 — the first-party sweep and the contract family query found

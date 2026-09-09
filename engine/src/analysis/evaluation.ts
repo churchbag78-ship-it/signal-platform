@@ -161,9 +161,20 @@ export interface RankingQuality {
  * Ranking is judged against the gold VALUE grade, not the gold label, because
  * ranking is a question about commercial worth rather than about evidence.
  * Pairs tied on gold value carry no information and are excluded from tau.
+ *
+ * `excludeFlagged` drops rows the gold set itself marks for re-grade — labels
+ * it has already recorded as unreliable. Both figures are reported, never one
+ * alone: dropping a row that disagrees with the engine is exactly the move
+ * that would let a benchmark flatter it.
  */
-export function rankingQuality(rows: EvaluationRow[]): RankingQuality {
-  const ranked = rows
+export function rankingQuality(
+  rows: EvaluationRow[],
+  options: { excludeFlagged?: boolean } = {},
+): RankingQuality {
+  const considered = options.excludeFlagged
+    ? rows.filter((r) => r.gold.regradeFlag === undefined)
+    : rows;
+  const ranked = considered
     .filter((r) => r.engine?.reported && r.engine.rank !== undefined)
     .sort((a, b) => (a.engine!.rank ?? 0) - (b.engine!.rank ?? 0));
 

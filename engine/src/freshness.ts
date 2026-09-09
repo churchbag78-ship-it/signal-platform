@@ -27,6 +27,11 @@ export const RECENCY_MAX_POINTS = 15;
  * the most recent thing that happened, not the oldest article about it.
  */
 export function latestSignalDate(signal: Signal): IsoDate | null {
+  // An attributed change date is authoritative. `null` means attribution ran
+  // and found none — an undated change, not an old one — so the evidence scan
+  // must not be allowed to substitute an older corroborating date for it.
+  if (signal.changeDate !== undefined) return signal.changeDate;
+
   const dates = signal.evidence
     .map((e) => e.signalDate)
     .filter((d): d is IsoDate => typeof d === 'string' && !Number.isNaN(Date.parse(d)));

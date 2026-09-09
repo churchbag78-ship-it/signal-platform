@@ -584,7 +584,10 @@ test('the run persists one record per target, and keeps a prior company in the u
   const states = new Map(records.map((r) => [r.domain, r.state]));
   assert.equal(states.get('winbrogroup.com'), 'no_trigger_found');
   assert.equal(states.get('slackandparr.com'), 'no_commercial_consequence');
-  assert.equal(states.get('nmsinfrastructure.com'), 'insufficient_evidence');
+  // Was `insufficient_evidence` until date attribution: the signal used to be
+  // rejected as stale because an undated current claim took the date of an
+  // older corroborating one.
+  assert.equal(states.get('nmsinfrastructure.com'), 'signal_found');
   assert.equal(states.get('maeving.com'), 'signal_found');
 });
 
@@ -600,16 +603,19 @@ test('the persisted record carries evidence and coverage, not just a verdict', a
   assert.equal(maeving.history.at(-1)!.state, 'signal_found');
 });
 
-test('NMS now reaches the pipeline and is rejected on freshness, not missed', async () => {
+test('a first-party programme claim reaches the pipeline and survives freshness undated', async () => {
   // The diagnostic case, stated as behaviour rather than as a company name in
-  // the query generator: a first-party programme claim reaches identity and
-  // evidence, and the freshness stage is what stops it.
+  // the query generator. Before date attribution this signal was rejected as
+  // `stale`: its undated first-party claim took the date of a 2022
+  // corroborating fact. It now carries no change date, which is a different
+  // state from old.
   const adapter = v5Adapter();
   await adapter.discoverTriggers(orbitalDirect);
 
-  const nms = adapter.rejections().find((r) => r.company.domain === 'nmsinfrastructure.com');
-  assert.ok(nms, 'NMS produced no rejection record');
-  assert.equal(nms.stage, 'stale');
-  assert.ok(nms.coverage);
-  assert.ok(nms.coverage.firstPartySourcesFound > 0, 'the sweep found no first-party source');
+  const signal = adapter.signals().find((s) => s.company.domain === 'nmsinfrastructure.com');
+  assert.ok(signal, 'the first-party programme claim produced no signal');
+  assert.equal(signal.dating.changeDate, null);
+  assert.equal(signal.freshness.excluded, false);
+  assert.ok(signal.dating.rejected.length >= 2, 'older dates were not rejected');
+  assert.ok(signal.coverage.firstPartySourcesFound > 0, 'the sweep found no first-party source');
 });

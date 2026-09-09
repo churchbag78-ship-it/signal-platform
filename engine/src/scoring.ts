@@ -21,6 +21,7 @@ import type {
 } from './domain.ts';
 import { assessEvidence, type EvidenceAssessment } from './evidence.ts';
 import { assessFreshness, type FreshnessResult } from './freshness.ts';
+import { changeIsDated } from './dating.ts';
 
 /** Judgement inputs the researcher supplies; recency is computed. */
 export interface ScoreJudgements {
@@ -82,8 +83,14 @@ export function applicableCaps(
   if (evidence.independentSources <= 1 && evidence.bestTier === 3) {
     caps.push({ cap: 75, reason: 'single trade-press source' });
   }
-  if (!evidence.hasDate) {
-    caps.push({ cap: 65, reason: 'no signal date established' });
+  if (!changeIsDated(candidate, evidence.hasDate)) {
+    caps.push({
+      cap: 65,
+      reason:
+        candidate.signal.changeDate === null
+          ? 'no date established for the change — the dates found belong to something else'
+          : 'no signal date established',
+    });
   }
   if (evidence.bestTier >= 4) {
     caps.push({ cap: 50, reason: 'aggregator or social sources only' });

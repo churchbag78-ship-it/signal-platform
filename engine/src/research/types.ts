@@ -24,6 +24,7 @@ import type { ScoreJudgements } from '../scoring.ts';
 import type { FreshnessResult } from '../freshness.ts';
 import type { ResearchCoverage } from './history.ts';
 import type { DirectionAssessment } from '../direction.ts';
+import type { SignalDating } from '../dating.ts';
 
 export type { SignalPolarity };
 
@@ -76,6 +77,19 @@ export interface CommercialConsequence {
 export interface ExtractionOutput {
   /** Signal type, e.g. "export_finance". Extensible — no enum. */
   trigger: string;
+  /**
+   * The claims that ESTABLISH the change named in `whatChanged`, as opposed to
+   * corroborating or contextual ones.
+   *
+   * The engine dates the signal from these alone. Without it, a fact about an
+   * older, different change can age a current one — which is how NMS's live
+   * building programme was excluded as stale on the strength of a 2022
+   * warehouse opening.
+   *
+   * Absent means "every claim is trigger-bearing", the pre-attribution
+   * behaviour.
+   */
+  triggerClaimIds?: string[];
   whatChanged: string;
   polarity: SignalPolarity;
   /**
@@ -138,6 +152,8 @@ export interface ResearchSignal {
   contradictions: Contradiction[];
   /** Reasoning hops from facts to hypothesis, measured from the chain. */
   inferenceDepth: number;
+  /** Which date dates the change, which do not, and why. */
+  dating: SignalDating;
   queriesRun: string[];
   /** What the run managed to look at, independent of what it found. */
   coverage: ResearchCoverage;

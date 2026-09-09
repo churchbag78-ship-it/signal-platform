@@ -28,6 +28,7 @@ import { promoteToFact, validatePolarity } from './extraction.ts';
 import { verifyClaimPassage, NullPageRetriever, type PageRetriever, type VerificationResult } from './retrieval.ts';
 import { assessFreshness } from '../freshness.ts';
 import { assessDirection, type DirectionAssessment } from '../direction.ts';
+import { attributeSignalDate } from '../dating.ts';
 import { assessEvidence } from '../evidence.ts';
 import type { ClientProfile, ResearchAdapter } from '../pipeline.ts';
 import type { ScoreJudgements } from '../scoring.ts';
@@ -493,10 +494,20 @@ export class WebResearchAdapter implements ResearchAdapter {
 
     const facts = supportingFacts(extraction.hypothesis.id, claims);
     const evidence = factsToEvidence(facts);
+
+    // Which date dates the change. Corroborating facts and dates that belong to
+    // an award or a reporting period are recorded as rejected rather than
+    // allowed to age the signal.
+    const dating = attributeSignalDate({
+      facts,
+      ...(extraction.triggerClaimIds ? { triggerClaimIds: extraction.triggerClaimIds } : {}),
+    });
+
     const signalShape = {
       type: extraction.trigger,
       description: extraction.whatChanged,
       evidence,
+      changeDate: dating.changeDate,
     };
     const freshness = assessFreshness(signalShape, this.#options.runDate);
 
@@ -562,11 +573,9 @@ export class WebResearchAdapter implements ResearchAdapter {
           },
         ];
 
-    const eventDate = evidence
-      .map((e) => e.signalDate)
-      .filter((d): d is IsoDate => typeof d === 'string')
-      .sort()
-      .at(-1);
+    // The signal's event date is the attributed change date, not whichever
+    // piece of evidence happens to carry the latest one.
+    const eventDate = dating.changeDate ?? undefined;
 
     const signal: ResearchSignal = {
       company,
@@ -590,6 +599,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       owningFunction: extraction.owningFunction,
       contradictions: signalContradictions,
       inferenceDepth: validation.depth,
+      dating,
       queriesRun: queries,
       coverage,
       judgements: {

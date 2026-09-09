@@ -39,6 +39,7 @@ import { orbitalGoldSet } from '../benchmark/gold-set.ts';
 import {
   evaluate,
   matrixCell,
+  rankingQuality,
   type EngineOutcome,
   type Evaluation,
 } from '../src/analysis/evaluation.ts';
@@ -567,6 +568,14 @@ function reportAxes(label: string, run: Awaited<ReturnType<typeof runPilot>>, ev
   for (const inv of rank.inversions) {
     console.log(`    inversion: ${inv.above} above ${inv.below}, which the gold set values higher`);
   }
+  const flagged = orbitalGoldSet.filter((g) => g.regradeFlag !== undefined);
+  if (flagged.length > 0) {
+    const undisputed = rankingQuality(evaluation.rows, { excludeFlagged: true });
+    console.log(
+      `                      tau ${undisputed.tau.toFixed(2)} excluding ${flagged.length} row(s) the gold set ` +
+        `itself flags for re-grade (${flagged.map((g) => g.company).join(', ')})`,
+    );
+  }
 
   const c = axes.contact;
   console.log(
@@ -598,6 +607,35 @@ console.log(
 
 reportAxes('TWO-AXIS — page retrieval blocked (the honest state)', twoAxisUnverified, evalTwoAxisUnverified);
 reportAxes('TWO-AXIS — reconstructed verification', twoAxisRun, evalTwoAxis);
+
+console.log('\n\nDATE ATTRIBUTION — which date dates the change');
+line('═');
+console.log(
+  `  ${'company'.padEnd(24)}${'change date'.padEnd(16)}${'basis'.padEnd(18)}${'recency'.padEnd(10)}dates rejected`,
+);
+for (const signal of twoAxisRun.adapter.signals()) {
+  const opportunity = twoAxisRun.result.opportunities.find(
+    (o) => o.company.domain === signal.company.domain,
+  );
+  console.log(
+    `  ${signal.company.name.padEnd(24)}` +
+      `${(signal.dating.changeDate ?? 'undated').padEnd(16)}` +
+      `${(signal.dating.basis ?? '—').padEnd(18)}` +
+      `${String(opportunity?.axes?.value.components.timing ?? '—').padEnd(10)}` +
+      `${signal.dating.rejected.length}`,
+  );
+  for (const rejected of signal.dating.rejected) {
+    console.log(`      ${rejected.date} (${rejected.basis}) — ${rejected.reason}`);
+  }
+  for (const note of signal.dating.notes) {
+    console.log(`      note: ${note}`);
+  }
+}
+const undated = twoAxisRun.adapter.signals().filter((s) => s.dating.changeDate === null);
+console.log(
+  `\n  ${undated.length} of ${twoAxisRun.adapter.signals().length} signals carry no date for the change. ` +
+    'Undated is not old: they are reported, capped on evidence and given no recency.',
+);
 
 console.log('\n\nDEMAND DIRECTION — derived from evidence, not from the declared label');
 line('═');

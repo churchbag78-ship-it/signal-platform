@@ -42,6 +42,7 @@ import type {
 import { assessEvidence, type EvidenceAssessment } from './evidence.ts';
 import { assessFreshness, type FreshnessResult } from './freshness.ts';
 import { applicableCaps, type AppliedCap, type ScoreJudgements } from './scoring.ts';
+import { changeIsDated } from './dating.ts';
 
 /* ------------------------------------------------------------------ *
  * Evidence axis
@@ -80,7 +81,8 @@ export function scoreEvidence(candidate: Candidate): EvidenceScore {
       Math.max(0, assessment.independentSources - 1) * 8,
     ),
     verification: assessment.verification === 'page_retrieved' ? 20 : 6,
-    dating: assessment.hasDate ? EVIDENCE_MAX.dating : 0,
+    // The CHANGE being dated, not merely a source carrying a date.
+    dating: changeIsDated(candidate, assessment.hasDate) ? EVIDENCE_MAX.dating : 0,
   };
 
   const raw = Object.values(components).reduce((a, b) => a + b, 0);
@@ -97,7 +99,8 @@ export function scoreEvidence(candidate: Candidate): EvidenceScore {
       `+ source authority ${components.sourceAuthority}/${EVIDENCE_MAX.sourceAuthority} (best tier ${assessment.bestTier})`,
       `+ independence ${components.independence}/${EVIDENCE_MAX.independence} (${assessment.independentSources} independent source(s))`,
       `+ verification ${components.verification}/${EVIDENCE_MAX.verification} (${assessment.verification})`,
-      `+ dating ${components.dating}/${EVIDENCE_MAX.dating} (${assessment.hasDate ? 'change is dated' : 'no date established'})`,
+      `+ dating ${components.dating}/${EVIDENCE_MAX.dating} ` +
+        `(${components.dating > 0 ? 'the change is dated' : 'no date established for the change'})`,
       ...appliedCaps.map((c) => `capped at ${c.cap} — ${c.reason}`),
       `= evidence ${score}/100`,
     ],

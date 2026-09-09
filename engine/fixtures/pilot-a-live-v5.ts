@@ -26,6 +26,7 @@ import type { CaptureFile } from '../src/research/agent-bridge.ts';
 import type { ExtractionCorpus } from '../src/research/corpus.ts';
 import type { ExtractedClaim } from '../src/research/extraction.ts';
 import type { ClaimTopic } from '../src/research/registry.ts';
+import type { DateBasis } from '../src/domain.ts';
 
 const UK = 'United Kingdom';
 
@@ -945,6 +946,8 @@ interface ClaimInput {
   topic: ClaimTopic;
   publicationDate?: string;
   eventDate?: string;
+  /** What the event date actually dates. Omitted reads as `change_occurred`. */
+  dateBasis?: DateBasis;
   stated: ExtractedClaim['identityAttributes'];
   confidence: number;
   originId?: string;
@@ -966,6 +969,7 @@ function claim(input: ClaimInput): ExtractedClaim {
     topic: input.topic,
     ...(input.publicationDate ? { publicationDate: input.publicationDate } : {}),
     ...(input.eventDate ? { eventDate: input.eventDate } : {}),
+    ...(input.dateBasis ? { dateBasis: input.dateBasis } : {}),
     identityAttributes: input.stated,
     ...(input.impacts ? { demandImpacts: input.impacts } : {}),
     extractionConfidence: input.confidence,
@@ -1007,6 +1011,8 @@ const hyp = (
 export const liveExtractionsV5: ExtractionCorpus = {
   'maeving.com': {
     trigger: 'export_finance',
+    // The facility and the fivefold increase are the change; the March raise is context.
+    triggerClaimIds: ['v5-maeving-c1', 'v5-maeving-c2'],
     whatChanged:
       '£3m UKEF-backed trade finance facility to build production capacity for the US, Germany and France, adding 13 jobs, against US sales already up fivefold year on year.',
     polarity: 'demand_increasing',
@@ -1027,6 +1033,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'funding',
         publicationDate: '2026-08-15',
         eventDate: '2026-08-15',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Maeving',
           statedGeography: { country: UK, town: 'Coventry' },
@@ -1049,6 +1056,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'export_trade',
         publicationDate: '2026-08-15',
         eventDate: '2026-08-15',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Maeving',
           statedGeography: { country: UK, town: 'Coventry' },
@@ -1119,6 +1127,8 @@ export const liveExtractionsV5: ExtractionCorpus = {
 
   'baltex.co.uk': {
     trigger: 'new_market_entry',
+    // The HSBC package and the Boeing-led US target are the change; the machine spend is how it is being used.
+    triggerClaimIds: ['v5-baltex-c1', 'v5-baltex-c2'],
     whatChanged:
       'Targeting the USA following Boeing approval, alongside a seven-figure HSBC package funding EU trade flows and a stated 20% export growth target. Exports are already 60% of the business.',
     polarity: 'demand_increasing',
@@ -1139,6 +1149,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'funding',
         publicationDate: '2026-07-20',
         eventDate: '2026-07-20',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Baltex',
           statedGeography: { country: UK, town: 'Ilkeston' },
@@ -1160,6 +1171,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'export_trade',
         publicationDate: '2026-07-20',
         eventDate: '2026-07-20',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Baltex',
           statedGeography: { country: UK, town: 'Ilkeston' },
@@ -1184,6 +1196,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'premises',
         publicationDate: '2026-07-20',
         eventDate: '2026-07-20',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Baltex',
           statedGeography: { country: UK, town: 'Ilkeston' },
@@ -1232,6 +1245,8 @@ export const liveExtractionsV5: ExtractionCorpus = {
 
   'devolkitchens.com': {
     trigger: 'new_market_entry',
+    // The export growth and the new markets are the change. The Shepshed factory is undated context.
+    triggerClaimIds: ['v5-devol-c1', 'v5-devol-c2', 'v5-devol-c3'],
     whatChanged:
       'Established new overseas markets in Thailand, China and Denmark, with 31% of sales exported and overseas revenue up 2,300% over six years.',
     polarity: 'demand_increasing',
@@ -1252,6 +1267,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'export_trade',
         publicationDate: '2026-05-06',
         eventDate: '2026-05-06',
+        dateBasis: 'recognition',
         stated: {
           statedName: 'deVOL Kitchens',
           statedGeography: { country: UK, region: 'Leicestershire' },
@@ -1359,6 +1375,8 @@ export const liveExtractionsV5: ExtractionCorpus = {
 
   'bramblefoods.co.uk': {
     trigger: 'new_premises',
+    // Lancaster House opening is the change; the acquisitions, the third base and the headcount plan are context.
+    triggerClaimIds: ['v5-bramble-c1'],
     whatChanged:
       'Opened Lancaster House, a 67,000 sq ft main UK distribution hub, while continuing an acquisitive strategy (Whitakers Chocolates January 2025, The Bay Tree January 2024).',
     polarity: 'demand_increasing',
@@ -1379,6 +1397,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'premises',
         publicationDate: '2026-07-31',
         eventDate: '2026-07-31',
+        dateBasis: 'change_occurred',
         stated: {
           statedName: 'Bramble Foods',
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
@@ -1501,6 +1520,8 @@ export const liveExtractionsV5: ExtractionCorpus = {
    */
   'nmsinfrastructure.com': {
     trigger: 'project_delivery_programme',
+    // The live 12-site programme is the change. The 2024 listing recognises it and the 2022 warehouse is a different, older change.
+    triggerClaimIds: ['v5-nms-c1'],
     whatChanged:
       'Under contract to build 22 district hospitals across Sub-Saharan Africa with work underway on 12 sites and over 1,000,000 sq ft under construction, consolidated through a UK export warehouse the company operates itself.',
     polarity: 'demand_increasing',
@@ -1541,6 +1562,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'financials',
         publicationDate: '2024-06-15',
         eventDate: '2024-06-15',
+        dateBasis: 'recognition',
         stated: {
           statedName: 'NMS International Group',
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
@@ -1561,6 +1583,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'premises',
         publicationDate: '2022-06-28',
         eventDate: '2022-06-28',
+        dateBasis: 'change_occurred',
         stated: {
           statedName: 'NMS Infrastructure',
           statedGeography: { country: UK, region: 'Leicestershire', town: 'Market Harborough' },
@@ -1628,6 +1651,8 @@ export const liveExtractionsV5: ExtractionCorpus = {
 
   'slackandparr.com': {
     trigger: 'contraction',
+    // The consultation is the change; the 2023 administration is background.
+    triggerClaimIds: ['v5-slackparr-c1'],
     whatChanged:
       'Considering the loss of up to 40 roles at Kegworth, citing dramatically slowing investment in Chinese and Far East markets, tariffs in new export markets and rising domestic costs.',
     polarity: 'demand_reducing',
@@ -1651,6 +1676,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         // stated it. The v5 snippet does not, and nothing is inferred.
         publicationDate: '2026-08-20',
         eventDate: '2026-08-20',
+        dateBasis: 'announced',
         stated: {
           statedName: 'Slack & Parr',
           statedGeography: { country: UK, town: 'Kegworth' },
@@ -1674,6 +1700,7 @@ export const liveExtractionsV5: ExtractionCorpus = {
         topic: 'corporate_identity',
         publicationDate: '2023-08-01',
         eventDate: '2023-08-01',
+        dateBasis: 'change_occurred',
         stated: {
           statedName: 'Slack & Parr',
           statedGeography: { country: UK, town: 'Kegworth' },

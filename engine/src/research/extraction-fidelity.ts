@@ -29,7 +29,9 @@ export type FidelityCategory =
   /** A demand impact naming something the client does not sell. */
   | 'demand_impact_offering_not_sold'
   /** A demand impact with no rationale, or none declared at all. */
-  | 'ungrounded_demand_direction';
+  | 'ungrounded_demand_direction'
+  /** A date supplied with no statement of what it dates. */
+  | 'unattributed_date';
 
 export interface FidelityFinding {
   category: FidelityCategory;
@@ -48,6 +50,8 @@ export interface FidelityExpectation {
   expectedPolarity: SignalPolarity;
   /** The client's own offerings, so an impact can be checked against them. */
   clientOfferings?: string[];
+  /** Require every dated claim to say what its date dates. */
+  requireDateBasis?: boolean;
   /** Figures present in the source text, for hallucination detection. */
   sourceFigures: string[];
   claimCount: { min: number; max: number };
@@ -248,6 +252,20 @@ export function measureFidelity(
   const byCategory: Partial<Record<FidelityCategory, number>> = {};
   for (const finding of findings) {
     byCategory[finding.category] = (byCategory[finding.category] ?? 0) + 1;
+  }
+
+  if (expectation.requireDateBasis === true) {
+    for (const claim of claims) {
+      if (claim.eventDate !== undefined && claim.dateBasis === undefined) {
+        findings.push({
+          category: 'unattributed_date',
+          claimId: claim.id,
+          detail:
+            `carries the event date ${claim.eventDate} without saying what it dates, ` +
+            'so the engine must assume it dates the change',
+        });
+      }
+    }
   }
 
   if (expectation.clientOfferings !== undefined) {

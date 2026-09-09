@@ -140,11 +140,45 @@ export function toCompanyIdentity(fingerprint: IdentityFingerprint): CompanyIden
   };
 }
 
+/**
+ * What a date on a claim actually dates.
+ *
+ * A date is not a date. An award announcement, a results period and the day a
+ * distribution centre opened are three different things, and treating them
+ * alike is how a six-year growth story acquires a "why now" it has not earned.
+ */
+export type DateBasis =
+  /** The source dates the change itself. */
+  | 'change_occurred'
+  /** The source dates the announcement; the change may predate it. */
+  | 'announced'
+  /** An award, listing or ranking dating recognition, not the change. */
+  | 'recognition'
+  /** A results or reporting period, not a point event. */
+  | 'reported_period';
+
+/** Bases that establish when the change happened. */
+export const DATING_BASES: DateBasis[] = ['change_occurred', 'announced'];
+
+export function datesTheChange(basis: DateBasis | undefined): boolean {
+  return DATING_BASES.includes(basis ?? 'change_occurred');
+}
+
 export interface Signal {
   /** Extensible by design — new signal types must not require engine changes. */
   type: string;
   description: string;
   evidence: Evidence[];
+  /**
+   * The date of the CHANGE, attributed by the engine rather than scraped from
+   * whichever evidence happens to carry the latest date.
+   *
+   * `undefined` means no attribution was performed and freshness falls back to
+   * scanning the evidence. `null` means attribution ran and found no date for
+   * the change — which is not the same as the change being old, and must never
+   * be read as such.
+   */
+  changeDate?: IsoDate | null;
   /**
    * True when the situation is ongoing rather than a point event (a facility
    * still under construction), which exempts it from the 12-month cutoff.
@@ -174,6 +208,8 @@ export interface Fact {
   source: Source;
   /** When the thing happened. */
   eventDate?: IsoDate;
+  /** What that date actually dates. Absent is read as `change_occurred`. */
+  dateBasis?: DateBasis;
   /** When we found out about it. Never a substitute for eventDate. */
   discoveredAt: IsoDate;
   verification: Verification;

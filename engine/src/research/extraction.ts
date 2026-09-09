@@ -19,7 +19,7 @@
  *   - a claim asserting attribution without attributes cannot be promoted
  */
 
-import type { SignalPolarity } from '../domain.ts';
+import type { DateBasis, SignalPolarity } from '../domain.ts';
 import type {
   Fact,
   IdentityFingerprint,
@@ -63,6 +63,15 @@ export interface ExtractedClaim {
   publicationDate?: IsoDate;
   /** When the thing described happened. Never substituted by publication date. */
   eventDate?: IsoDate;
+  /**
+   * What `eventDate` actually dates. Absent is read as `change_occurred`,
+   * which is the permissive default and is recorded as an assumption.
+   *
+   * The case this exists for: an award announcement carries a firm date and
+   * dates nothing about the change it recognises. deVOL's King's Award gave a
+   * six-year growth story a "why now" it had not earned.
+   */
+  dateBasis?: DateBasis;
   /** What the claim is about, so the source can be scored in context. */
   topic: ClaimTopic;
   /** Identity attributes READ FROM THE SOURCE — never copied from the target. */
@@ -145,6 +154,18 @@ export function validateExtractedClaim(claim: ExtractedClaim): ClaimValidation {
     }
   }
 
+  if (
+    claim.dateBasis !== undefined &&
+    !['change_occurred', 'announced', 'recognition', 'reported_period'].includes(claim.dateBasis)
+  ) {
+    errors.push(`claim "${claim.id}" has an unknown date basis "${claim.dateBasis}"`);
+  }
+  if (claim.dateBasis !== undefined && claim.eventDate === undefined) {
+    errors.push(
+      `claim "${claim.id}" declares a date basis with no event date to attribute`,
+    );
+  }
+
   for (const impact of claim.demandImpacts ?? []) {
     if (!impact.offering?.trim()) {
       errors.push(`claim "${claim.id}" has a demand impact with no offering named`);
@@ -220,6 +241,7 @@ export function promoteToFact(
       ...(claim.originId ? { originId: claim.originId } : {}),
     },
     ...(claim.eventDate ? { eventDate: claim.eventDate } : {}),
+    ...(claim.dateBasis ? { dateBasis: claim.dateBasis } : {}),
     discoveredAt,
     verification: claim.verification,
     attribution,
@@ -234,6 +256,7 @@ export function promoteToFact(
 // Defined in the domain layer, because scoring needs the direction of a
 // change and must not depend on the research layer to get it.
 export type { SignalPolarity };
+export type { DateBasis };
 
 const CONTRACTION_MARKERS = [
   'redundanc', 'job loss', 'jobs loss', 'lay off', 'layoff', 'closure', 'closing',

@@ -62,6 +62,14 @@ For every claim you must supply:
 - publicationDate and eventDate in YYYY-MM-DD where the source gives them.
   The event date is when the thing happened. Never substitute the publication
   date for it, and omit either if the source does not state it.
+- dateBasis: what the eventDate actually dates —
+  'change_occurred' when the source dates the change itself,
+  'announced' when it dates the announcement and the change may predate it,
+  'recognition' when it dates an award, listing or ranking that recognises a
+  change without dating it,
+  'reported_period' when it covers a results period rather than a point event.
+  An award announcement has a firm date and dates nothing about the change it
+  recognises. Say so rather than letting the award stand as the date.
 - identityAttributes: what the SOURCE says about the company it discusses —
   statedName, statedDomain, statedGeography {country, region, town},
   statedIndustry, statedDescriptors, statedCompanyNumber
@@ -97,8 +105,13 @@ The engine derives the direction it scores from your per-claim demandImpacts,
 not from your polarity label. Your polarity is a cross-check: where the two
 disagree, the engine records the disagreement and scores the evidence.
 
+- triggerClaimIds: the ids of the claims that ESTABLISH the change you named in
+  whatChanged, as opposed to corroborating or background ones. The engine dates
+  the change from these alone, so a fact about an older, different change
+  cannot make a current one look stale.
+
 Return a single JSON object with keys: claims, trigger, whatChanged, polarity,
-polarityRationale. Return nothing else.`;
+polarityRationale, triggerClaimIds. Return nothing else.`;
 
 export interface LlmTransport {
   (url: string, init: RequestInit): Promise<Response>;

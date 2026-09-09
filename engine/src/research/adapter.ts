@@ -584,6 +584,12 @@ export class WebResearchAdapter implements ResearchAdapter {
       inferenceSteps: validation.depth,
       decisionMakerRole: extraction.owningFunction,
       claims,
+      // Direction of the change travels with the candidate so scoring can ask
+      // whether it increases or decreases demand for this client. The polarity
+      // check has already run against the evidence; its warnings travel on the
+      // signal, and the declared polarity is what was validated.
+      polarity: extraction.polarity,
+      consequenceActionable: extraction.consequence.actionable,
     };
 
     return { outcome: 'signal', signal, candidate };

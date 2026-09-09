@@ -19,6 +19,7 @@
  *   - a claim asserting attribution without attributes cannot be promoted
  */
 
+import type { SignalPolarity } from '../domain.ts';
 import type {
   Fact,
   IdentityFingerprint,
@@ -183,7 +184,9 @@ export function promoteToFact(
 
 // --- polarity validation ---------------------------------------------------
 
-export type SignalPolarity = 'demand_increasing' | 'demand_reducing' | 'neutral';
+// Defined in the domain layer, because scoring needs the direction of a
+// change and must not depend on the research layer to get it.
+export type { SignalPolarity };
 
 const CONTRACTION_MARKERS = [
   'redundanc', 'job loss', 'jobs loss', 'lay off', 'layoff', 'closure', 'closing',

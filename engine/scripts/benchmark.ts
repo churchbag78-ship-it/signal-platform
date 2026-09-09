@@ -43,6 +43,7 @@ import {
   type Evaluation,
 } from '../src/analysis/evaluation.ts';
 import { assessReasoning, GENERIC_PATTERNS } from '../src/analysis/reasoning.ts';
+import { axisCorrelation } from '../src/two-axis.ts';
 import {
   discoveryCost,
   discoveryMetrics,
@@ -112,7 +113,7 @@ const priorRuns = (): ResearchRecord[] => [
   },
 ];
 
-async function runPilot(strategy: Strategy, retriever: PageRetriever) {
+async function runPilot(strategy: Strategy, retriever: PageRetriever, twoAxis = false) {
   const legacy = strategy === 'template';
   const history = new InMemoryHistoryStore(priorRuns());
 
@@ -140,6 +141,7 @@ async function runPilot(strategy: Strategy, retriever: PageRetriever) {
     ledger: [],
     limit: 50,
     reportableFloor: FLOOR,
+    twoAxis,
   });
 
   return { adapter, result, history };
@@ -161,6 +163,14 @@ function engineOutcomes(run: Awaited<ReturnType<typeof runPilot>>): EngineOutcom
       classification: o.score.classification,
       action: o.recommendedAction.action,
       researched: true,
+      ...(o.axes
+        ? {
+            evidenceScore: o.axes.evidence.score,
+            valueScore: o.axes.value.score,
+            quadrant: o.axes.quadrant,
+            contactRecommended: o.axes.contactRecommended,
+          }
+        : {}),
     });
   });
 
@@ -280,8 +290,23 @@ function reportEvaluation(label: string, evaluation: Evaluation) {
 /* ------------------------------- run ------------------------------- */
 
 const before = await runPilot('template', new FixturePageRetriever(reconstructedPages));
-const afterUnverified = await runPilot('change_family', new NullPageRetriever('egress policy blocks outbound page fetches'));
+const afterUnverified = await runPilot(
+  'change_family',
+  new NullPageRetriever('egress policy blocks outbound page fetches'),
+);
 const after = await runPilot('change_family', new FixturePageRetriever(reconstructedPagesV5));
+
+// Same corpus, same judgements, same discovery — only the scoring model differs.
+const twoAxisUnverified = await runPilot(
+  'change_family',
+  new NullPageRetriever('egress policy blocks outbound page fetches'),
+  true,
+);
+const twoAxisRun = await runPilot(
+  'change_family',
+  new FixturePageRetriever(reconstructedPagesV5),
+  true,
+);
 
 console.log('\nSIGNAL — COMMERCIAL BENCHMARK · DISCOVERY MILESTONE');
 line('═');
@@ -487,6 +512,107 @@ for (const record of after.adapter.droppedFromUniverse) {
   console.log(
     `    ${record.company} — last state ${record.state} on ${record.lastCheckedAt}. ` +
       'Still in the universe; this run did not re-check it.',
+  );
+}
+console.log();
+
+/* --------------------------- two axes ------------------------------ */
+
+const evalTwoAxis = evaluate(orbitalGoldSet, engineOutcomes(twoAxisRun));
+const evalTwoAxisUnverified = evaluate(orbitalGoldSet, engineOutcomes(twoAxisUnverified));
+
+function reportAxes(label: string, run: Awaited<ReturnType<typeof runPilot>>, evaluation: Evaluation) {
+  console.log(`\n\n${label}`);
+  line('═');
+  console.log(
+    `  ${'company'.padEnd(24)}${'evidence'.padEnd(16)}${'value'.padEnd(16)}${'quadrant'.padEnd(20)}${'confidence'.padEnd(12)}action`,
+  );
+  for (const o of run.result.opportunities) {
+    const a = o.axes!;
+    console.log(
+      `  ${o.company.name.padEnd(24)}` +
+        `${`${a.evidence.score} ${a.evidenceBand}`.padEnd(16)}` +
+        `${`${a.value.score} ${a.valueBand}`.padEnd(16)}` +
+        `${a.quadrant.padEnd(20)}${a.confidence.padEnd(12)}${o.recommendedAction.action}`,
+    );
+  }
+  for (const drop of run.result.dropped) {
+    console.log(`  ${drop.company.name.padEnd(24)}dropped [${drop.stage}] ${drop.reason}`);
+  }
+
+  const axes = evaluation.axes!;
+  console.log(
+    `\n  evidence agreement  ${axes.evidence.agree}/${axes.evidence.compared} (${pct(axes.evidence.agreementRate)}) · ` +
+      `overstated ${axes.evidence.overstated.length} · understated ${axes.evidence.understated.length}`,
+  );
+  for (const o of [...axes.evidence.overstated, ...axes.evidence.understated]) {
+    console.log(`    ${o.company}: engine ${o.engine}, gold ${o.gold}`);
+  }
+  console.log(
+    `  value agreement     ${axes.value.agree}/${axes.value.compared} (${pct(axes.value.agreementRate)}) · ` +
+      `overstated ${axes.value.overstated.length} · understated ${axes.value.understated.length}`,
+  );
+  for (const o of [...axes.value.overstated, ...axes.value.understated]) {
+    console.log(`    ${o.company}: engine ${o.engine}, gold ${o.gold}`);
+  }
+
+  // Band agreement asks whether the engine's absolute number lands in the same
+  // grade as the gold set. Ordering asks the weaker but fairer question:
+  // whatever the numbers, does it put the more valuable company first?
+  const rank = evaluation.ranking;
+  console.log(
+    `  value ordering      concordant ${rank.concordant} · discordant ${rank.discordant} · ` +
+      `tied on gold value ${rank.tied} · tau ${rank.tau.toFixed(2)}`,
+  );
+  for (const inv of rank.inversions) {
+    console.log(`    inversion: ${inv.above} above ${inv.below}, which the gold set values higher`);
+  }
+
+  const c = axes.contact;
+  console.log(
+    `\n  reported ${evaluation.rates.reported} · precision over everything reported ${pct(evaluation.rates.precision)}`,
+  );
+  console.log(
+    `  call sheet ${c.contacts} · contact precision ${c.contacts === 0 ? 'n/a' : pct(c.contactPrecision)}`,
+  );
+  if (c.correctlyHeldBack.length > 0) {
+    console.log(`  reported but held back from contact, correctly: ${c.correctlyHeldBack.join(', ')}`);
+  }
+  if (c.heldBack.length > 0) {
+    console.log(`  genuine opportunities reported but held back: ${c.heldBack.join(', ')}`);
+  }
+
+  const correlation = axisCorrelation(run.result.opportunities.map((o) => o.axes!));
+  console.log(
+    `\n  axis correlation ${correlation === null ? 'n/a' : correlation.toFixed(2)} — ` +
+      'under one score it is 1 by construction.',
+  );
+}
+
+console.log('\n\n════════ TWO-AXIS SCORING ════════');
+console.log(
+  'Same corpus, same discovery, same researcher judgements. Only the scoring\n' +
+    'model differs from the runs above. Band boundaries (75/60/45) and the\n' +
+    'reportable floor (60) are the single-axis model\'s own numbers, per axis.',
+);
+
+reportAxes('TWO-AXIS — page retrieval blocked (the honest state)', twoAxisUnverified, evalTwoAxisUnverified);
+reportAxes('TWO-AXIS — reconstructed verification', twoAxisRun, evalTwoAxis);
+
+console.log('\n\nSINGLE AXIS vs TWO AXES — the same run, scored both ways');
+line('═');
+console.log(
+  `  ${'company'.padEnd(24)}${'single'.padEnd(24)}${'two-axis'.padEnd(34)}gold (ev/val)`,
+);
+for (const o of twoAxisRun.result.opportunities) {
+  const single = after.result.opportunities.find((x) => x.company.domain === o.company.domain);
+  const gold = orbitalGoldSet.find((g) => g.domain === o.company.domain);
+  const a = o.axes!;
+  console.log(
+    `  ${o.company.name.padEnd(24)}` +
+      `${(single ? `${single.score.total} ${single.recommendedAction.action}` : 'not reported').padEnd(24)}` +
+      `${`ev ${a.evidence.score} / val ${a.value.score} → ${o.recommendedAction.action}`.padEnd(34)}` +
+      `${gold ? `${gold.evidence}/${gold.value} (${gold.label})` : '—'}`,
   );
 }
 console.log();

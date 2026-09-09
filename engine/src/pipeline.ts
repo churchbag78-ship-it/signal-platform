@@ -32,6 +32,13 @@ import {
   type DedupeVerdict,
   type LedgerEntry,
 } from './dedupe.ts';
+import {
+  AXIS_FLOOR,
+  compareTwoAxis,
+  scoreTwoAxis,
+  type Quadrant,
+  type TwoAxisResult,
+} from './two-axis.ts';
 
 /** What the client sells, who buys, and what has to change before they buy. */
 export interface ClientProfile {
@@ -60,6 +67,12 @@ export interface Opportunity {
   company: CompanyIdentity;
   signal: Signal;
   score: ScoreResult;
+  /**
+   * Evidence and commercial value scored separately. Present when the run was
+   * asked for two-axis scoring; the single-axis `score` is always computed so
+   * the two remain directly comparable on the same run.
+   */
+  axes?: TwoAxisResult;
   decisionMakerRole?: DecisionMakerRole;
   recommendedAction: RecommendedAction;
   dedupe: DedupeVerdict;
@@ -105,6 +118,67 @@ export interface RunOptions {
   limit: number;
   /** Below this score a candidate is not reportable. */
   reportableFloor?: number;
+  /**
+   * Score evidence and commercial value on separate axes, and use them for
+   * reportability, ranking and the recommended action. The single-axis score
+   * is still computed and carried, so a run can be read either way.
+   */
+  twoAxis?: boolean;
+}
+
+/**
+ * The action follows from the quadrant, not from a single number.
+ *
+ * The one rule that is not a straight mapping: `LOW_VALUE` — well evidenced,
+ * thin commercial case — recommends monitoring rather than contact, because
+ * `docs/ORBITAL_COMMERCIAL_BENCHMARK.md` calls that cell "interesting, not
+ * worth sales time". Reporting it is right; putting it on a call sheet is not.
+ */
+export function recommendActionByQuadrant(
+  axes: TwoAxisResult,
+  role: DecisionMakerRole | undefined,
+): RecommendedAction {
+  if (axes.evidence.appliedCaps.some((c) => c.reason.includes('conflicting'))) {
+    return {
+      action: 'manual_review',
+      rationale: 'conflicting evidence must be resolved by a person before contact',
+    };
+  }
+
+  const quadrant: Quadrant = axes.quadrant;
+
+  if (quadrant === 'RESEARCH_PRIORITY') {
+    return {
+      action: 'research_further',
+      rationale:
+        `the commercial case is strong (value ${axes.value.score}) but the evidence is not yet ` +
+        `there (${axes.evidence.score}) — verify before contact`,
+    };
+  }
+  if (quadrant === 'LOW_VALUE') {
+    return {
+      action: 'monitor',
+      rationale:
+        `well evidenced (${axes.evidence.score}) but the commercial case is thin ` +
+        `(value ${axes.value.score}) — interesting, not worth sales time yet`,
+    };
+  }
+  if (quadrant === 'WATCH') {
+    return {
+      action: 'monitor',
+      rationale: 'neither axis is strong enough to justify a call',
+    };
+  }
+  if (!role) {
+    return {
+      action: 'identify_decision_maker',
+      rationale: 'commercial case and evidence both hold, but the owning function is not identified',
+    };
+  }
+  return {
+    action: 'draft_outreach',
+    rationale: `evidence ${axes.evidence.score} and commercial value ${axes.value.score} both hold`,
+  };
 }
 
 export function recommendAction(
@@ -144,6 +218,7 @@ export async function runPipeline(
 ): Promise<RunResult> {
   const { client, runDate, ledger, limit } = options;
   const floor = options.reportableFloor ?? 45;
+  const twoAxis = options.twoAxis ?? false;
 
   const dropped: DroppedCandidate[] = [];
   const funnel: Record<string, number> = {};
@@ -199,6 +274,8 @@ export async function runPipeline(
   for (const candidate of fresh) {
     const assessed = await adapter.assess(candidate, client);
     const score = scoreCandidate(assessed.candidate, assessed.judgements, runDate);
+    // Always computed, so one run can be read on either model.
+    const axes = scoreTwoAxis(assessed.candidate, assessed.judgements, runDate);
 
     if (score.excluded) {
       dropped.push({
@@ -208,7 +285,18 @@ export async function runPipeline(
       });
       continue;
     }
-    if (score.total < floor) {
+    if (twoAxis) {
+      if (!axes.reportable) {
+        dropped.push({
+          company: candidate.company,
+          stage: 'scoring',
+          reason:
+            `evidence ${axes.evidence.score}, value ${axes.value.score} — ` +
+            `neither axis clears the ${AXIS_FLOOR}-point floor`,
+        });
+        continue;
+      }
+    } else if (score.total < floor) {
       dropped.push({
         company: candidate.company,
         stage: 'scoring',
@@ -232,8 +320,11 @@ export async function runPipeline(
       company: assessed.candidate.company,
       signal: assessed.candidate.signal,
       score,
+      axes,
       decisionMakerRole: assessed.candidate.decisionMakerRole,
-      recommendedAction: recommendAction(score, assessed.candidate.decisionMakerRole),
+      recommendedAction: twoAxis
+        ? recommendActionByQuadrant(axes, assessed.candidate.decisionMakerRole)
+        : recommendAction(score, assessed.candidate.decisionMakerRole),
       dedupe,
       whyNow: assessed.whyNow,
       salesAngle: assessed.salesAngle,
@@ -241,7 +332,13 @@ export async function runPipeline(
   }
   funnel.scored = scored.length;
 
-  scored.sort((a, b) => b.score.total - a.score.total);
+  // Ranking is a commercial question, so under two axes value orders first and
+  // evidence breaks ties.
+  scored.sort((a, b) =>
+    twoAxis && a.axes && b.axes
+      ? compareTwoAxis(a.axes, b.axes)
+      : b.score.total - a.score.total,
+  );
 
   // Never pad to the requested number. Returning fewer is the correct
   // behaviour when fewer qualify.

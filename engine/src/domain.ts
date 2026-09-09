@@ -232,6 +232,15 @@ export interface ContactResult {
   source?: Source;
 }
 
+/**
+ * Whether a change increases or decreases demand for THIS client's offer.
+ *
+ * Defined here rather than in the research layer because scoring needs it: the
+ * direction of a change is a commercial fact about the change, not a detail of
+ * how it was extracted.
+ */
+export type SignalPolarity = 'demand_increasing' | 'demand_reducing' | 'neutral';
+
 export interface Candidate {
   company: CompanyIdentity;
   signal: Signal;
@@ -246,6 +255,16 @@ export interface Candidate {
   contact?: ContactResult;
   /** The fact → inference → hypothesis chain behind this candidate. */
   claims?: Claim[];
+  /**
+   * Direction of the change for this client. Absent means the research layer
+   * did not establish one, which scores as `neutral` rather than as growth.
+   */
+  polarity?: SignalPolarity;
+  /**
+   * True when the research layer judged the change to create something this
+   * client can act on. Absent is treated as false.
+   */
+  consequenceActionable?: boolean;
 }
 
 /** Normalises a domain so it can be used as the identity key. */

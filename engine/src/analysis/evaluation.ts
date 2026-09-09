@@ -34,6 +34,13 @@ export interface EngineOutcome {
   rejectionReason?: string;
   /** True when the company was never put to the engine at all. */
   researched: boolean;
+
+  /* Two-axis fields. Absent on a single-axis run. */
+  evidenceScore?: number;
+  valueScore?: number;
+  quadrant?: string;
+  /** True when the engine says approach this company now. */
+  contactRecommended?: boolean;
 }
 
 /**
@@ -351,6 +358,98 @@ export function matrixCell(
 }
 
 /* ------------------------------------------------------------------ *
+ * Two-axis agreement
+ * ------------------------------------------------------------------ */
+
+/** The band boundaries the two-axis model uses, restated for the evaluator. */
+export function axisBand(score: number): 'high' | 'medium' | 'low' {
+  if (score >= 75) return 'high';
+  if (score >= 60) return 'medium';
+  return 'low';
+}
+
+/**
+ * Agreement between an axis score and the gold grade for that axis.
+ *
+ * This is the measurement the single-axis model could not make honestly: with
+ * one number, "how well proven" and "how much worth pursuing" were compared
+ * against the same figure, so improving one appeared to improve both.
+ */
+export function axisAgreement(
+  rows: EvaluationRow[],
+  axis: 'evidence' | 'value',
+): Agreement {
+  const compared = rows.filter((r) => {
+    const score = axis === 'evidence' ? r.engine?.evidenceScore : r.engine?.valueScore;
+    return r.engine?.reported && score !== undefined;
+  });
+
+  const overstated: Agreement['overstated'] = [];
+  const understated: Agreement['understated'] = [];
+  let agree = 0;
+
+  for (const r of compared) {
+    const score = (axis === 'evidence' ? r.engine!.evidenceScore : r.engine!.valueScore)!;
+    const engineBand = axisBand(score);
+    const goldGrade = axis === 'evidence' ? r.gold.evidence : r.gold.value;
+    const record = { company: r.gold.company, engine: `${engineBand} (${score})`, gold: goldGrade };
+
+    if (VALUE_ORDER[engineBand]! === VALUE_ORDER[goldGrade]!) agree += 1;
+    else if (VALUE_ORDER[engineBand]! > VALUE_ORDER[goldGrade]!) overstated.push(record);
+    else understated.push(record);
+  }
+
+  return {
+    compared: compared.length,
+    agree,
+    overstated,
+    understated,
+    agreementRate: compared.length === 0 ? 0 : agree / compared.length,
+  };
+}
+
+export interface ContactRates {
+  /** Rows the engine recommends approaching now. */
+  contacts: number;
+  /** Of those, how many the gold set calls a genuine opportunity. */
+  correct: number;
+  /** Precision over the call sheet, rather than over everything reported. */
+  contactPrecision: number;
+  /** Genuine opportunities reported but held back from contact. */
+  heldBack: string[];
+  /** Non-opportunities reported and correctly held back from contact. */
+  correctlyHeldBack: string[];
+}
+
+/**
+ * Precision over the call sheet.
+ *
+ * Reporting a row and putting it in front of a salesperson are different acts,
+ * and the two-axis model separates them: the low-value and unverified cells are
+ * reported without being recommended for contact. Both numbers are given so the
+ * separation cannot be used to flatter the engine.
+ */
+export function contactRates(rows: EvaluationRow[]): ContactRates {
+  const contacts = rows.filter((r) => r.engine?.contactRecommended);
+  const correct = contacts.filter((r) => isGenuineOpportunity(r.gold.label));
+  const reportedNotContacted = rows.filter(
+    (r) => r.engine?.reported && !r.engine.contactRecommended,
+  );
+
+  return {
+    contacts: contacts.length,
+    correct: correct.length,
+    contactPrecision: contacts.length === 0 ? 0 : correct.length / contacts.length,
+    heldBack: reportedNotContacted
+      .filter((r) => isGenuineOpportunity(r.gold.label))
+      .map((r) => r.gold.company),
+    correctlyHeldBack: reportedNotContacted
+      .filter((r) => !isGenuineOpportunity(r.gold.label))
+      .map((r) => r.gold.company),
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Failure accounting
  * ------------------------------------------------------------------ */
 
@@ -396,11 +495,28 @@ export interface Evaluation {
   value: Agreement;
   matrix: MatrixEntry[];
   failures: FailureCounts;
+  /** Present when the run scored on two axes. */
+  axes?: {
+    evidence: Agreement;
+    value: Agreement;
+    contact: ContactRates;
+  };
 }
 
 export function evaluate(gold: GoldEntry[], outcomes: EngineOutcome[]): Evaluation {
   const rows = joinRows(gold, outcomes);
+  const twoAxis = outcomes.some((o) => o.valueScore !== undefined);
+
   return {
+    ...(twoAxis
+      ? {
+          axes: {
+            evidence: axisAgreement(rows, 'evidence'),
+            value: axisAgreement(rows, 'value'),
+            contact: contactRates(rows),
+          },
+        }
+      : {}),
     rows,
     confusion: confusion(rows),
     rates: rates(rows),

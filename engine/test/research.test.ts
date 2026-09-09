@@ -138,6 +138,8 @@ test('evidence quality rewards better tiers and genuine independence', () => {
 
 function pilotAdapter() {
   return new WebResearchAdapter({
+    // Replays a capture taken before change-family discovery existed.
+    queryStrategy: 'template',
     search: new StaticSearchClient(pilotASearchCorpus),
     extractor: new CorpusClaimExtractor(pilotAExtractions),
     targets: pilotATargets,
@@ -185,6 +187,8 @@ test('"researched, nothing found" is recorded distinctly from "not researched"',
 
 test('a company absent from the corpus raises rather than reporting a clean negative', async () => {
   const adapter = new WebResearchAdapter({
+    // Replays a capture taken before change-family discovery existed.
+    queryStrategy: 'template',
     search: new StaticSearchClient(pilotASearchCorpus),
     extractor: new CorpusClaimExtractor(pilotAExtractions),
     targets: [{ canonicalName: 'Never Researched Ltd', canonicalDomain: 'never-researched.com' }],

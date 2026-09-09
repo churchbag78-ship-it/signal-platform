@@ -43,6 +43,8 @@ function prescreen(company: CompanyIdentity, _client: ClientProfile): string | n
 async function run(retriever: PageRetriever) {
   const search = new AgentBridgeSearchClient(liveCaptureV3);
   const adapter = new WebResearchAdapter({
+    // Replays a capture taken before change-family discovery existed.
+    queryStrategy: 'template',
     search,
     extractor: new CorpusClaimExtractor(liveExtractionsV3),
     targets: pilotATargets,

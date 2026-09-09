@@ -35,7 +35,27 @@ import type {
   ResearchOutcome,
   ResearchSignal,
   SearchClient,
+  SearchResult,
+  RejectionStage as NoSignalStage,
 } from './types.ts';
+import {
+  planFamilyQueries,
+  type ChangeFamilyId,
+  type PlannedQuery,
+} from './change-families.ts';
+import {
+  sweepFirstParty,
+  SWEPT_SECTIONS,
+  type FirstPartySection,
+  type FirstPartySweep,
+} from './first-party.ts';
+import {
+  mergeRecords,
+  type HistoryStore,
+  type ResearchCoverage,
+  type ResearchRecord,
+  type ResearchState,
+} from './history.ts';
 
 export interface WebResearchOptions {
   search: SearchClient;
@@ -64,6 +84,23 @@ export interface WebResearchOptions {
    * default, and never silently.
    */
   retriever?: PageRetriever;
+  /**
+   * `change_family` (default) plans queries across the commercial change
+   * families and sweeps the company's own sources first. `template` reproduces
+   * the two fixed queries the v4 engine ran, and exists only so earlier runs
+   * stay replayable for comparison.
+   */
+  queryStrategy?: 'change_family' | 'template';
+  /** Change-family queries per company. Search is the expensive part. */
+  familyBudget?: number;
+  /** Restrict the plan to these families. Defaults to all of them. */
+  families?: ChangeFamilyId[];
+  /** First-party sections to sweep. Unswept sections are recorded as unchecked. */
+  firstPartySections?: FirstPartySection[];
+  /** Cap on direct first-party page fetches per company. */
+  maxFirstPartyPaths?: number;
+  /** Durable research state. Optional: without it, a run remembers nothing. */
+  history?: HistoryStore;
 }
 
 /**
@@ -109,6 +146,34 @@ export function buildQueries(
   ].slice(0, limit);
 }
 
+/**
+ * The durable state a rejection stage represents.
+ *
+ * `research_failure` is kept apart from every genuine negative on purpose: a
+ * company whose research could not run must never look like a company that was
+ * checked and found quiet.
+ */
+export function rejectionState(stage: NoSignalStage): ResearchState {
+  switch (stage) {
+    case 'icp':
+      return 'disqualified';
+    case 'no_trigger_found':
+      return 'no_trigger_found';
+    case 'no_commercial_consequence':
+      return 'no_commercial_consequence';
+    case 'identity_collision':
+      return 'identity_collision';
+    case 'identity':
+    case 'identity_unresolved':
+      return 'identity_unresolved';
+    case 'research_failure':
+      return 'research_failure';
+    default:
+      // stale, contradiction, invalid_chain, invalid_claims, insufficient_evidence
+      return 'insufficient_evidence';
+  }
+}
+
 /** Evidence quality derived from what the sources actually are. */
 export function deriveEvidenceQuality(claims: Claim[], hypothesisId: string): number {
   const facts = supportingFacts(hypothesisId, claims);
@@ -149,6 +214,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
+    const retriever = this.#options.retriever ?? new NullPageRetriever();
     const prescreenReason = this.#options.prescreen?.(company, client);
     if (prescreenReason) {
       return {
@@ -162,13 +228,97 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
-    const queries = buildQueries(target, client, this.#options.maxQueriesPerCompany ?? 4, {
-      disambiguate: this.#options.disambiguateQueries ?? true,
-    });
+    // --- DISCOVERY -------------------------------------------------------
+    // Mandatory first-party sweep, then change-family queries. Discovery only
+    // decides what the engine LOOKS at; every judgement downstream — identity,
+    // source authority, verification, polarity, epistemic level — is unchanged.
+    const strategy = this.#options.queryStrategy ?? 'change_family';
 
-    const results = [];
-    for (const query of queries) {
-      results.push(...(await this.#options.search.search(query)));
+    let sweep: FirstPartySweep | null = null;
+    const plan: PlannedQuery[] = [];
+
+    if (strategy === 'template') {
+      const legacy = buildQueries(target, client, this.#options.maxQueriesPerCompany ?? 4, {
+        disambiguate: this.#options.disambiguateQueries ?? true,
+      });
+      plan.push(
+        ...legacy.map((query, index) => ({
+          query,
+          kind: 'change_family' as const,
+          priority: index,
+        })),
+      );
+    } else {
+      const sections = this.#options.firstPartySections ?? SWEPT_SECTIONS;
+      sweep = await sweepFirstParty({
+        target,
+        retriever,
+        search: this.#options.search,
+        sections,
+        maxPaths: this.#options.maxFirstPartyPaths ?? 0,
+      });
+      plan.push(
+        ...planFamilyQueries(target, client, {
+          familyBudget: this.#options.familyBudget,
+          families: this.#options.families,
+        }),
+      );
+    }
+
+    // A query the transport cannot execute is a COVERAGE failure. Recording it
+    // as an empty result would manufacture "we looked and found nothing",
+    // which is the one negative that must always be real.
+    const results: SearchResult[] = sweep ? [...sweep.results] : [];
+    const executed: PlannedQuery[] = sweep ? [...sweep.queries] : [];
+    const unexecuted: { query: string; reason: string }[] = [];
+
+    for (const planned of plan) {
+      try {
+        results.push(...(await this.#options.search.search(planned.query)));
+        executed.push(planned);
+      } catch (error) {
+        unexecuted.push({
+          query: planned.query,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const queries = executed.map((q) => q.query);
+    const familiesChecked = executed
+      .map((q) => q.family)
+      .filter((f): f is ChangeFamilyId => f !== undefined);
+
+    const coverage: ResearchCoverage = {
+      familiesChecked,
+      firstPartySectionsCovered: sweep?.sectionsCovered ?? [],
+      firstPartySectionsUnchecked: sweep?.sectionsUnchecked ?? [],
+      firstPartyPathsAttempted: sweep?.paths.length ?? 0,
+      firstPartyPathsRetrieved: sweep?.paths.filter((p) => p.outcome === 'retrieved').length ?? 0,
+      firstPartySourcesFound: sweep?.sourcesFound ?? 0,
+      firstPartyQueriesRun: sweep?.queries.length ?? 0,
+      retrievalBlocked: sweep?.retrievalBlocked ?? false,
+      queriesRun: queries,
+      sourcesSeen: results.length,
+    };
+
+    this.coverageByDomain.set(domain, coverage);
+    this.unexecutedByDomain.set(domain, unexecuted);
+
+    if (executed.length === 0) {
+      return {
+        outcome: 'no_signal',
+        rejection: {
+          company,
+          stage: 'research_failure',
+          reason:
+            `no query in the plan could be executed (${unexecuted.length} failed). ` +
+            'This is a coverage failure, not a finding about the company.',
+          queriesRun: [],
+          coverage,
+          errors: unexecuted.map((u) => `${u.query}: ${u.reason}`),
+        },
+      };
     }
 
     const extraction = await this.#options.extractor.extract({
@@ -187,6 +337,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           reason:
             'researched across the client trigger model; no dated commercial change found',
           queriesRun: queries,
+          coverage,
         },
       };
     }
@@ -199,6 +350,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           stage: 'icp',
           reason: extraction.icpRelevance.rationale,
           queriesRun: queries,
+          coverage,
         },
       };
     }
@@ -208,7 +360,6 @@ export class WebResearchAdapter implements ResearchAdapter {
     // identity gate -> Fact. A claim earns `page_retrieved` only when the page
     // was fetched AND its supporting passage was found in the body. Anything
     // else stays at snippet level with the reason recorded.
-    const retriever = this.#options.retriever ?? new NullPageRetriever();
     const verifications: VerificationResult[] = [];
     const verifiedClaims = [];
 
@@ -281,6 +432,7 @@ export class WebResearchAdapter implements ResearchAdapter {
               ? 'every source describes a different company with a similar name'
               : 'no source could be confidently attributed to this company',
           queriesRun: queries,
+          coverage,
           ...(claimErrors.length > 0 ? { errors: claimErrors } : {}),
           identityRejections,
         },
@@ -309,6 +461,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           reason:
             'the commercial hypothesis rested entirely on sources that could not be attributed to this company',
           queriesRun: queries,
+          coverage,
           identityRejections,
         },
       };
@@ -323,6 +476,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           stage: 'invalid_chain',
           reason: 'the reasoning chain does not hold together',
           queriesRun: queries,
+          coverage,
           errors: validation.errors,
           identityRejections,
         },
@@ -346,6 +500,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           stage: 'stale',
           reason: `signal found but ${freshness.reason}`,
           queriesRun: queries,
+          coverage,
           identityRejections,
         },
       };
@@ -362,6 +517,7 @@ export class WebResearchAdapter implements ResearchAdapter {
           stage: 'no_commercial_consequence',
           reason: extraction.consequence.rationale,
           queriesRun: queries,
+          coverage,
           identityRejections,
         },
       };
@@ -377,6 +533,7 @@ export class WebResearchAdapter implements ResearchAdapter {
             extraction.contradictions.find((c) => c.severity === 'fatal')?.note ??
             'fatal contradiction',
           queriesRun: queries,
+          coverage,
           identityRejections,
         },
       };
@@ -409,6 +566,7 @@ export class WebResearchAdapter implements ResearchAdapter {
       contradictions: extraction.contradictions,
       inferenceDepth: validation.depth,
       queriesRun: queries,
+      coverage,
       judgements: {
         icpFit: extraction.judgements.icpFit,
         signalStrength: extraction.judgements.signalStrength,
@@ -432,15 +590,112 @@ export class WebResearchAdapter implements ResearchAdapter {
   }
 
   readonly outcomes: ResearchOutcome[] = [];
+  /** Coverage per company, kept whatever the outcome was. */
+  readonly coverageByDomain = new Map<string, ResearchCoverage>();
+  /** Planned queries the transport could not execute, per company. */
+  readonly unexecutedByDomain = new Map<string, { query: string; reason: string }[]>();
+  /** Companies previously researched that this run's target list omits. */
+  droppedFromUniverse: ResearchRecord[] = [];
 
   async discoverTriggers(client: ClientProfile): Promise<Candidate[]> {
     this.outcomes.length = 0;
+    this.coverageByDomain.clear();
+    this.unexecutedByDomain.clear();
 
     for (const target of this.#options.targets) {
       this.outcomes.push(await this.researchCompany(target, client));
     }
 
+    await this.#persist();
+
     return this.outcomes.filter((o) => o.outcome === 'signal').map((o) => o.candidate);
+  }
+
+  /**
+   * Write this run's state to the history store. A company researched once
+   * stays in the universe: `droppedFromUniverse` reports anything the store
+   * knows about that this run's target list omitted, so a target cannot leave
+   * silently the way ADS Laser did between v1 and v2.
+   */
+  async #persist(): Promise<void> {
+    const store = this.#options.history;
+    if (!store) return;
+
+    const stored = await store.load();
+    const records = this.outcomes.map((outcome) => this.#recordFor(outcome));
+    const merged = mergeRecords(stored, records);
+
+    const targetDomains = this.#options.targets
+      .map((t) => normalizeDomain(t.canonicalDomain))
+      .filter(Boolean);
+    this.droppedFromUniverse = merged.filter(
+      (record) => !targetDomains.includes(record.domain.toLowerCase()),
+    );
+
+    await store.save(merged);
+  }
+
+  #recordFor(outcome: ResearchOutcome): ResearchRecord {
+    const company = outcome.outcome === 'signal' ? outcome.signal.company : outcome.rejection.company;
+    const runDate = this.#options.runDate;
+    const emptyCoverage: ResearchCoverage = {
+      familiesChecked: [],
+      firstPartySectionsCovered: [],
+      firstPartySectionsUnchecked: [],
+      firstPartyPathsAttempted: 0,
+      firstPartyPathsRetrieved: 0,
+      firstPartySourcesFound: 0,
+      firstPartyQueriesRun: 0,
+      retrievalBlocked: false,
+      queriesRun: [],
+      sourcesSeen: 0,
+    };
+    const coverage =
+      this.coverageByDomain.get(company.domain) ??
+      (outcome.outcome === 'signal' ? outcome.signal.coverage : outcome.rejection.coverage) ??
+      emptyCoverage;
+
+    const state: ResearchState =
+      outcome.outcome === 'signal' ? 'signal_found' : rejectionState(outcome.rejection.stage);
+    const reason =
+      outcome.outcome === 'signal'
+        ? `${outcome.signal.trigger}: ${outcome.signal.whatChanged}`
+        : outcome.rejection.reason;
+
+    return {
+      domain: company.domain,
+      company: company.name,
+      state,
+      reason,
+      lastCheckedAt: runDate,
+      ...(outcome.outcome === 'signal'
+        ? {
+            trigger: outcome.signal.trigger,
+            ...(outcome.signal.eventDate ? { signalDate: outcome.signal.eventDate } : {}),
+          }
+        : {}),
+      coverage,
+      evidence:
+        outcome.outcome === 'signal'
+          ? outcome.signal.facts.map((fact) => ({
+              url: fact.source.url,
+              publisher: fact.source.publisher,
+              tier: fact.source.tier,
+              verification: fact.verification,
+              ...(fact.eventDate ? { eventDate: fact.eventDate } : {}),
+            }))
+          : [],
+      history: [
+        {
+          runDate,
+          state,
+          reason,
+          queries: coverage.queriesRun.length,
+          sourcesSeen: coverage.sourcesSeen,
+        },
+      ],
+      timesResearched: 1,
+    };
   }
 
   async assess(candidate: Candidate, _client: ClientProfile) {

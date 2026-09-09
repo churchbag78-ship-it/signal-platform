@@ -26,6 +26,8 @@ const RUN_DATE = '2026-09-08';
 const REPORTABLE_FLOOR = 60;
 
 const adapter = new WebResearchAdapter({
+  // Replays a capture taken before change-family discovery existed.
+  queryStrategy: 'template',
   search: new StaticSearchClient(pilotASearchCorpus),
   extractor: new CorpusClaimExtractor(pilotAExtractions),
   targets: pilotATargets,

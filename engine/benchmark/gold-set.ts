@@ -78,6 +78,12 @@ export interface GoldEntry {
   missReason?: MissReason;
   /** Defects in the engine's output for this company, independent of the label. */
   engineErrors?: EngineError[];
+  /**
+   * Evidence found AFTER this entry was labelled that bears on the label.
+   * Recorded rather than acted on: a label re-graded because the engine found
+   * something is no longer independent of the engine.
+   */
+  regradeFlag?: string;
   notes?: string;
 }
 
@@ -105,6 +111,19 @@ export const orbitalGoldSet: GoldEntry[] = [
     missReason: 'source_discovery_failure',
     notes:
       'The strongest commercial opportunity in the corpus and the engine reported "no trigger found". The contract is announced on the company\'s own news blog, which no query reached.',
+    // 2026-09-09, discovery milestone. The first-party sweep reached the
+    // company's own site and found the answer to unknown #1: NMSI runs its own
+    // UK export warehouse with an NMSI Logistics team doing pre-shipment
+    // testing, QC and containerisation. Project logistics is largely in-house,
+    // and only the international leg is still bought.
+    //
+    // The LABEL IS DELIBERATELY UNCHANGED. Re-grading because the engine found
+    // evidence is the circularity this gold set exists to avoid. Recording it
+    // instead: on this evidence the value grade looks like `medium`, not
+    // `high`, and the label like B rather than A. An Orbital salesperson should
+    // settle it.
+    regradeFlag:
+      'In-house project logistics evidenced 2026-09-09 — value grade and label both likely too generous.',
   },
 
   {

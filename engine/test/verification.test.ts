@@ -432,6 +432,8 @@ test('verification level changes scores without changing the scoring model', asy
 
   const build = (retriever: import('../src/research/retrieval.ts').PageRetriever) =>
     new WebResearchAdapter({
+      // Replays a capture taken before change-family discovery existed.
+      queryStrategy: 'template',
       search: new AgentBridgeSearchClient(liveCaptureV3),
       extractor: new CorpusClaimExtractor(liveExtractionsV3),
       targets: pilotATargets.filter((t) => t.canonicalDomain === 'maeving.com'),
@@ -465,6 +467,8 @@ test('a claim whose page cannot be retrieved is never promoted to page level', a
   const { pilotATargets } = await import('../fixtures/pilot-a.ts');
 
   const adapter = new WebResearchAdapter({
+    // Replays a capture taken before change-family discovery existed.
+    queryStrategy: 'template',
     search: new AgentBridgeSearchClient(liveCaptureV3),
     extractor: new CorpusClaimExtractor(liveExtractionsV3),
     targets: pilotATargets.filter((t) => t.canonicalDomain === 'maeving.com'),

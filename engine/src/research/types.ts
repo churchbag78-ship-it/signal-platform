@@ -22,6 +22,7 @@ import type { ExtractedClaim, SignalPolarity } from './extraction.ts';
 import type { VerificationResult } from './retrieval.ts';
 import type { ScoreJudgements } from '../scoring.ts';
 import type { FreshnessResult } from '../freshness.ts';
+import type { ResearchCoverage } from './history.ts';
 
 export type { SignalPolarity };
 
@@ -129,6 +130,8 @@ export interface ResearchSignal {
   /** Reasoning hops from facts to hypothesis, measured from the chain. */
   inferenceDepth: number;
   queriesRun: string[];
+  /** What the run managed to look at, independent of what it found. */
+  coverage: ResearchCoverage;
   /** Researcher judgements; evidence quality is derived, so it is excluded. */
   judgements: Omit<ScoreJudgements, 'evidenceQuality'>;
   whyNow: string;
@@ -153,7 +156,13 @@ export type RejectionStage =
   | 'stale'
   | 'contradiction'
   | 'invalid_chain'
-  | 'invalid_claims';
+  | 'invalid_claims'
+  /**
+   * The research could not be performed — no query in the plan could be
+   * executed. This is NEVER a finding about the company, and must never be
+   * read as one.
+   */
+  | 'research_failure';
 
 /**
  * A researched company that produced nothing. Recording these is not
@@ -166,6 +175,8 @@ export interface NoSignal {
   stage: RejectionStage;
   reason: string;
   queriesRun: string[];
+  /** What the run managed to look at. Absent for pre-search rejections. */
+  coverage?: ResearchCoverage;
   /** Present when the chain was built but failed validation. */
   errors?: string[];
   /** Sources rejected on identity, with the verdict that rejected them. */

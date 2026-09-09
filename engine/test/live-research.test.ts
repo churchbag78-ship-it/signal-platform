@@ -203,6 +203,8 @@ function prescreen(company: CompanyIdentity): string | null {
 
 function liveAdapter(withPrescreen = true) {
   return new WebResearchAdapter({
+    // Replays a capture taken before change-family discovery existed.
+    queryStrategy: 'template',
     search: new AgentBridgeSearchClient(liveCaptureV3),
     extractor: new CorpusClaimExtractor(liveExtractionsV3),
     targets: pilotATargets,

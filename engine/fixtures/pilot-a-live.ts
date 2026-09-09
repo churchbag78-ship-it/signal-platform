@@ -15,6 +15,8 @@ import type { Fact, Hypothesis, Inference, SourceAttribution } from '../src/doma
 import type { CaptureFile } from '../src/research/agent-bridge.ts';
 import type { ExtractionCorpus } from '../src/research/corpus.ts';
 import { toSource } from '../src/research/sources.ts';
+import type { ClaimTopic } from '../src/research/registry.ts';
+import { asClaims } from './legacy-adapter.ts';
 
 const RUN_DATE = '2026-09-08';
 
@@ -30,7 +32,7 @@ function fact(
     kind: 'fact',
     id,
     statement,
-    source: toSource(url, ownedDomains, originId),
+    source: toSource(url, { ownedDomains }, originId),
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
     verification: 'search_summary_only',
@@ -60,8 +62,12 @@ const hyp = (
  * the identity gate, so it must never be derived from the target fingerprint:
  * that would make every source trivially match itself.
  */
-function withAttribution(facts: Fact[], stated: Omit<SourceAttribution, 'url'>): Fact[] {
-  return facts.map((f) => ({ ...f, attribution: { url: f.source.url, ...stated } }));
+function withAttribution(
+  facts: Fact[],
+  stated: Omit<SourceAttribution, 'url'>,
+  topic: ClaimTopic = 'general',
+) {
+  return asClaims(facts, stated, topic);
 }
 
 /** Results as returned, trimmed to those that carried a claim. */
@@ -286,12 +292,14 @@ export const liveExtractions: ExtractionCorpus = {
     whatChanged:
       '£3m UKEF-backed trade finance facility to build production capacity for the US, Germany and France, adding 13 jobs, against US sales already up fivefold year on year.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Funded export scale-up on a regulated cargo type: more consignments, more documentation.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'lv-maeving-f1',
         'Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at Coventry.',
@@ -311,7 +319,7 @@ export const liveExtractions: ExtractionCorpus = {
         'https://bmmagazine.co.uk/get-funded/uk-e-motorbike-maker-maeving-secures-8m-to-fuel-growth-and-overseas-expansion/',
         '2025-09-30',
       ),
-    ], { statedName: 'Maeving', statedGeography: { country: 'United Kingdom', town: 'Coventry' }, statedIndustry: 'electric motorbike manufacturing' }),
+    ], { statedName: 'Maeving', statedGeography: { country: 'United Kingdom', town: 'Coventry' }, statedIndustry: 'electric motorbike manufacturing' }, 'export_trade'),
     inferences: [
       inf(
         'lv-maeving-i1',
@@ -356,12 +364,14 @@ export const liveExtractions: ExtractionCorpus = {
     whatChanged:
       'Targeting the USA market following Boeing approval, alongside a seven-figure HSBC package funding EU trade flows and a stated 20% export growth target.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'A new US lane plus 20% more EU volume is new freight to be arranged.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'lv-baltex-f1',
         'Baltex secured a seven-figure HSBC UK package; TradePay facilities support EU imports and exports, with spending split between Ilkeston and Łódź, Poland.',
@@ -375,7 +385,7 @@ export const liveExtractions: ExtractionCorpus = {
         'https://knittingindustry.com/uks-baltex-accelerates-international-strategy/',
         '2026-07-20',
       ),
-    ], { statedName: 'Baltex', statedGeography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' }, statedIndustry: 'technical textiles' }),
+    ], { statedName: 'Baltex', statedGeography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' }, statedIndustry: 'technical textiles' }, 'export_trade'),
     inferences: [
       inf(
         'lv-baltex-i1',
@@ -420,12 +430,14 @@ export const liveExtractions: ExtractionCorpus = {
     whatChanged:
       'Opened Lancaster House, a 67,000 sq ft main UK distribution hub, expanding product range and customer base with up to 50 new roles.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Storage is closed, but outbound volume and Q4 peak overflow both grow.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'lv-bramble-f1',
         'Bramble Foods opened a 67,000 sq ft national distribution centre, Lancaster House, at Airfield Business Park, opened alongside managing director Tony Foster, finance director Chris Neville and sales director Ken Osborne.',
@@ -438,7 +450,7 @@ export const liveExtractions: ExtractionCorpus = {
         'https://www.grocerygazette.co.uk/2026/07/31/bramble-foods-opens-new-distribution-hub-and-eyes-expansion/',
         '2026-07-31',
       ),
-    ], { statedName: 'Bramble Foods', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'fine food manufacturing and distribution' }),
+    ], { statedName: 'Bramble Foods', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'fine food manufacturing and distribution' }, 'premises'),
     inferences: [
       inf(
         'lv-bramble-i1',
@@ -487,12 +499,14 @@ export const liveExtractions: ExtractionCorpus = {
     whatChanged:
       'Established new overseas markets in Thailand, China and Denmark, with 31% of sales now exported and overseas revenue up 2,300% over six years; recognised by a King\'s Award for International Trade.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'New Asian and Nordic lanes need crating and consolidation decisions now.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'lv-devol-f1',
         'deVOL has grown overseas revenue by 2,300% over the last six years, with 31% of sales now exported, orders received from over 35 countries, and new overseas markets established in Thailand, China and Denmark.',
@@ -511,7 +525,7 @@ export const liveExtractions: ExtractionCorpus = {
         'https://www.matherjamie.co.uk/latest-news/luxury-kitchen-supplier-s-expansion-is-a-recipe-for-success/',
         undefined,
       ),
-    ], { statedName: 'deVOL Kitchens', statedGeography: { country: 'United Kingdom', town: 'Loughborough' }, statedIndustry: 'handmade kitchens and interiors' }),
+    ], { statedName: 'deVOL Kitchens', statedGeography: { country: 'United Kingdom', town: 'Loughborough' }, statedIndustry: 'handmade kitchens and interiors' }, 'export_trade'),
     inferences: [
       inf(
         'lv-devol-i1',
@@ -567,19 +581,21 @@ export const liveExtractions: ExtractionCorpus = {
     whatChanged:
       'Considering the loss of up to 40 roles at Kegworth, citing slowing Chinese and Far East investment, tariffs in new export markets and rising domestic costs.',
     polarity: 'demand_reducing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: false,
       rationale:
         'Export volumes are contracting and cost is being cut: freight demand is falling, so there is nothing here for this client to sell into. A cost-reduction vendor would read this differently.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'lv-slackparr-f1',
         'Slack & Parr has confirmed it is considering the loss of up to 40 roles at its Kegworth facility, citing dramatically slowing investment in Chinese and Far East markets, the imposition of tariffs in new export markets, and significant increases in domestic business costs.',
         'https://www.insidermedia.com/news/midlands/slack-parr-weighs-up-jobs-losses-at-kegworth-facility',
         '2026-08-20',
       ),
-    ], { statedName: 'Slack & Parr', statedGeography: { country: 'United Kingdom', town: 'Kegworth' }, statedIndustry: 'precision pump manufacturing' }),
+    ], { statedName: 'Slack & Parr', statedGeography: { country: 'United Kingdom', town: 'Kegworth' }, statedIndustry: 'precision pump manufacturing' }, 'restructuring'),
     inferences: [
       inf(
         'lv-slackparr-i1',

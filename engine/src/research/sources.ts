@@ -1,108 +1,41 @@
 /**
- * Source classification — URL to tier and type.
+ * Source classification — URL plus claim topic to tier.
  *
- * Deliberately conservative: an unrecognised host is treated as an aggregator
- * (tier 4), not as trade press. In an evidence product the cost of
- * over-trusting an unknown source is much higher than the cost of
- * under-scoring a good one, and an under-scored row is visible in the output
- * where an over-trusted one is not.
+ * Classification is contextual: the same publisher can be strong evidence for
+ * one kind of claim and weak for another. A job board proves a vacancy exists
+ * and proves nothing about a contract award; a private equity house is primary
+ * about its own portfolio and promotional about the market.
+ *
+ * An unrecognised host stays at tier 4 and flagged for review. In an evidence
+ * product, over-trusting an unknown source is worse than under-scoring a good
+ * one — an under-scored row is visible in the output, an over-trusted one is
+ * not. Coverage improves by growing the registry, never by relaxing this.
  */
 
 import type { Source, SourceTier } from '../domain.ts';
 import { normalizeDomain } from '../domain.ts';
+import { lookupRegistry, type ClaimTopic, type SourceCategory } from './registry.ts';
 
-export type SourceType =
-  | 'first_party'
-  | 'public_record'
-  | 'trade_press'
-  | 'news'
-  | 'aggregator'
-  | 'social'
-  | 'unknown';
+export type { ClaimTopic, SourceCategory };
 
 export interface Classification {
   tier: SourceTier;
-  type: SourceType;
+  category: SourceCategory;
   publisher: string;
   /** True when the host was not recognised and the tier is a safe default. */
   needsReview: boolean;
+  /** True when the registry says this source is authoritative for this topic. */
+  authoritativeForTopic: boolean;
+  /** Human-readable audit trail for this classification. */
+  rationale: string;
 }
 
-const PUBLIC_RECORD_SUFFIXES = ['.gov.uk', '.gov', '.gov.scot', '.gov.wales', '.europa.eu'];
-
-const PUBLIC_RECORD_HOSTS = new Set([
-  'find-and-update.company-information.service.gov.uk',
-  'companieshouse.gov.uk',
-  'contractsfinder.service.gov.uk',
-  'ted.europa.eu',
-]);
-
-const TRADE_PRESS = new Set([
-  'thebusinessdesk.com',
-  'insidermedia.com',
-  'themanufacturer.com',
-  'eastmidlandsbusinesslink.co.uk',
-  'lovebusinesseastmidlands.com',
-  'grocerygazette.co.uk',
-  'confectioneryproduction.com',
-  'knittingindustry.com',
-  'innovationintextiles.com',
-  'machinery.co.uk',
-  'machinery-market.co.uk',
-  'sheetmetalindustries.com',
-  'welding-world.com',
-  'logisticsmatters.co.uk',
-  'retail-systems.com',
-  'kbbreview.com',
-  'pesmedia.com',
-  'mpemagazine.co.uk',
-  'insidefoodanddrink.com',
-  'industrialnews.co.uk',
-  'mfg-outlook.com',
-]);
-
-const NEWS = new Set([
-  'bbc.co.uk',
-  'ft.com',
-  'theguardian.com',
-  'telegraph.co.uk',
-  'motorcyclenews.com',
-  'leicestermercury.co.uk',
-  'harboroughfm.co.uk',
-]);
-
-const AGGREGATORS = new Set([
-  'crunchbase.com',
-  'zoominfo.com',
-  'pitchbook.com',
-  'dnb.com',
-  'cbinsights.com',
-  'bloomberg.com',
-  'yell.com',
-  'cylex-uk.co.uk',
-  '1stdirectory.co.uk',
-  'importyeti.com',
-  'theorg.com',
-  'dealroom.co',
-  'companycheck.co.uk',
-  'insolvencyintel.co.uk',
-  'wheree.com',
-  'houzz.co.uk',
-  'britaine.co.uk',
-]);
-
-const SOCIAL = new Set([
-  'linkedin.com',
-  'facebook.com',
-  'twitter.com',
-  'x.com',
-  'instagram.com',
-  'youtube.com',
-  'tiktok.com',
-]);
-
-/** Local-authority and public-body hosts that publish primary announcements. */
-const PUBLIC_BODY_PATTERN = /(^|\.)(gov|council|nhs|police)\./;
+export interface ClassifyOptions {
+  /** Domains the company owns — canonical plus VERIFIED aliases only. */
+  ownedDomains?: string[];
+  /** What the claim is about. Omitted means judge on general credibility. */
+  topic?: ClaimTopic;
+}
 
 function hostOf(url: string): string {
   try {
@@ -112,64 +45,75 @@ function hostOf(url: string): string {
   }
 }
 
-function matchesSet(host: string, set: Set<string>): boolean {
-  if (set.has(host)) return true;
-  // Match subdomains: news.example.com against example.com.
-  return [...set].some((entry) => host.endsWith(`.${entry}`));
-}
-
-/**
- * @param ownedDomains every domain the company is known to own — its canonical
- * domain plus VERIFIED aliases. Unverified aliases must never be passed here:
- * a similar-looking domain is not evidence of ownership.
- */
-export function classifySource(
-  url: string,
-  ownedDomains: string[] = [],
-): Classification {
+export function classifySource(url: string, options: ClassifyOptions = {}): Classification {
   const host = hostOf(url);
 
   if (!host) {
-    return { tier: 5, type: 'unknown', publisher: 'unknown', needsReview: true };
+    return {
+      tier: 5,
+      category: 'unknown',
+      publisher: 'unknown',
+      needsReview: true,
+      authoritativeForTopic: false,
+      rationale: 'no resolvable host',
+    };
   }
 
-  for (const candidate of ownedDomains) {
-    const own = normalizeDomain(candidate);
+  for (const owned of options.ownedDomains ?? []) {
+    const own = normalizeDomain(owned);
     if (own && (host === own || host.endsWith(`.${own}`))) {
-      return { tier: 1, type: 'first_party', publisher: host, needsReview: false };
+      return {
+        tier: 1,
+        category: 'first_party',
+        publisher: host,
+        needsReview: false,
+        authoritativeForTopic: true,
+        rationale: `published on ${host}, a verified domain of the target company`,
+      };
     }
   }
 
-  if (
-    PUBLIC_RECORD_HOSTS.has(host) ||
-    PUBLIC_RECORD_SUFFIXES.some((suffix) => host.endsWith(suffix)) ||
-    PUBLIC_BODY_PATTERN.test(host)
-  ) {
-    return { tier: 2, type: 'public_record', publisher: host, needsReview: false };
+  const entry = lookupRegistry(host);
+  if (!entry) {
+    return {
+      tier: 4,
+      category: 'unknown',
+      publisher: host,
+      needsReview: true,
+      authoritativeForTopic: false,
+      rationale: `${host} is not in the source registry; treated conservatively pending review`,
+    };
   }
 
-  if (matchesSet(host, TRADE_PRESS)) {
-    return { tier: 3, type: 'trade_press', publisher: host, needsReview: false };
-  }
-  if (matchesSet(host, NEWS)) {
-    return { tier: 3, type: 'news', publisher: host, needsReview: false };
-  }
-  if (matchesSet(host, AGGREGATORS)) {
-    return { tier: 4, type: 'aggregator', publisher: host, needsReview: false };
-  }
-  if (matchesSet(host, SOCIAL)) {
-    return { tier: 5, type: 'social', publisher: host, needsReview: false };
-  }
+  const topic = options.topic;
+  const authoritative =
+    topic === undefined
+      ? entry.authoritativeFor.length > 0
+      : entry.authoritativeFor.includes(topic) || entry.authoritativeFor.includes('general');
 
-  return { tier: 4, type: 'unknown', publisher: host, needsReview: true };
+  const tier = authoritative ? entry.tier : entry.outOfScopeTier;
+
+  const rationale = authoritative
+    ? `${host} (${entry.category}, tier ${tier}) — ${entry.provenance.evidence}`
+    : `${host} (${entry.category}) is tier ${entry.tier} for ${entry.authoritativeFor.join(', ') || 'general reporting'} ` +
+      `but this claim is about ${topic ?? 'an unstated topic'}, so it is scored at tier ${tier}`;
+
+  return {
+    tier,
+    category: entry.category,
+    publisher: host,
+    needsReview: false,
+    authoritativeForTopic: authoritative,
+    rationale,
+  };
 }
 
 export function toSource(
   url: string,
-  ownedDomains: string[] = [],
+  options: ClassifyOptions = {},
   originId?: string,
 ): Source {
-  const classification = classifySource(url, ownedDomains);
+  const classification = classifySource(url, options);
   return {
     url,
     tier: classification.tier,

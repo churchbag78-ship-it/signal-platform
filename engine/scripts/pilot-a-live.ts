@@ -9,7 +9,7 @@
  */
 
 import { orbitalDirect, pilotATargets } from '../fixtures/pilot-a.ts';
-import { liveCaptureV2, liveExtractionsV2 } from '../fixtures/pilot-a-live-v2.ts';
+import { liveCaptureV3, liveExtractionsV3 } from '../fixtures/pilot-a-live-v3.ts';
 import { AgentBridgeSearchClient } from '../src/research/agent-bridge.ts';
 import { CorpusClaimExtractor } from '../src/research/corpus.ts';
 import { WebResearchAdapter } from '../src/research/adapter.ts';
@@ -19,7 +19,7 @@ import { CostLedger } from '../src/providers/registry.ts';
 import type { ClientProfile } from '../src/pipeline.ts';
 import type { CompanyIdentity } from '../src/domain.ts';
 
-const RUN_DATE = '2026-09-08';
+const RUN_DATE = '2026-09-09';
 const REPORTABLE_FLOOR = 60;
 
 /** Cheap screen before any search: never spend research on a disqualified company. */
@@ -32,11 +32,11 @@ function prescreen(company: CompanyIdentity, _client: ClientProfile): string | n
   return reason ? `${reason}; matches client disqualifier list` : null;
 }
 
-const search = new AgentBridgeSearchClient(liveCaptureV2);
+const search = new AgentBridgeSearchClient(liveCaptureV3);
 
 const adapter = new WebResearchAdapter({
   search,
-  extractor: new CorpusClaimExtractor(liveExtractionsV2),
+  extractor: new CorpusClaimExtractor(liveExtractionsV3),
   targets: pilotATargets,
   runDate: RUN_DATE,
   maxQueriesPerCompany: 2,
@@ -65,11 +65,11 @@ for (const query of search.queriesRequested) {
 
 const line = (char = '─') => console.log(char.repeat(78));
 
-console.log('\nSIGNAL — PILOT A v2 (LIVE RESEARCH, IDENTITY-HARDENED)');
+console.log('\nSIGNAL — PILOT A v3 (REGISTRY + CLAIMEXTRACTOR)');
 line('═');
 console.log(`CLIENT:              ${orbitalDirect.name}`);
 console.log(`DATE:                ${RUN_DATE}`);
-console.log(`TRANSPORT:           ${liveCaptureV2.transport}`);
+console.log(`TRANSPORT:           ${liveCaptureV3.transport}`);
 console.log(`COMPANIES IN SCOPE:  ${pilotATargets.length}`);
 console.log(`QUERIES EXECUTED:    ${search.queriesRequested.length}`);
 console.log(`PROVIDER CREDITS:    ${ledger.totalCredits()}`);
@@ -93,6 +93,10 @@ for (const [index, opportunity] of result.opportunities.entries()) {
   console.log(`   TRIGGER   ${signal.trigger} · event ${signal.eventDate ?? 'undated'} · ${signal.freshness.ageDays} days old`);
   console.log(`   CHANGED   ${signal.whatChanged}`);
   console.log(`   ROLE      ${signal.owningFunction.function}`);
+  console.log(`   POLARITY  ${signal.polarity} — ${signal.polarityRationale}`);
+  if (signal.polarityWarnings.length > 0) {
+    for (const w of signal.polarityWarnings) console.log(`   ! polarity warning: ${w}`);
+  }
 
   console.log('   FACTS');
   for (const f of supportingFacts(signal.hypothesis.id, signal.claims)) {

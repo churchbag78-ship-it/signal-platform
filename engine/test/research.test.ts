@@ -25,8 +25,8 @@ test('government and public-body hosts are public record', () => {
   assert.equal(classifySource('https://www.gov.uk/government/news/x').tier, 2);
   assert.equal(classifySource('https://www.leicestershire.gov.uk/news/x').tier, 2);
   assert.equal(
-    classifySource('https://find-and-update.company-information.service.gov.uk/company/1').type,
-    'public_record',
+    classifySource('https://find-and-update.company-information.service.gov.uk/company/1').category,
+    'official_registry',
   );
 });
 
@@ -37,13 +37,13 @@ test("a company's own site is first-party ONLY when the company domain is suppli
   assert.equal(withoutContext.tier, 4);
   assert.equal(withoutContext.needsReview, true);
 
-  const withContext = classifySource('https://maeving.com/en-us/pages/rm1', ['maeving.com']);
+  const withContext = classifySource('https://maeving.com/en-us/pages/rm1', { ownedDomains: ['maeving.com'] });
   assert.equal(withContext.tier, 1);
-  assert.equal(withContext.type, 'first_party');
+  assert.equal(withContext.category, 'first_party');
 });
 
 test('first-party detection handles subdomains and www', () => {
-  const result = classifySource('https://news.example.co.uk/post', ['example.co.uk']);
+  const result = classifySource('https://news.example.co.uk/post', { ownedDomains: ['example.co.uk'] });
   assert.equal(result.tier, 1);
 });
 
@@ -239,8 +239,16 @@ test('the end-to-end run returns only what qualifies, and explains the rest', as
     reportableFloor: 60,
   });
 
-  assert.equal(result.opportunities.length, 4, '4 of 9 researched companies qualify');
+  // Three, not four: this v1-era corpus cites leicestershire.gov.uk and
+  // kbbreview for deVOL's EXPORT claim, and neither is authoritative on export
+  // trade, so the row scores 59. The later live corpus cites deVOL's own
+  // domains for the same claim and scores 70. Contextual classification, not a
+  // change of standard.
+  assert.equal(result.opportunities.length, 3);
   assert.equal(result.opportunities[0]?.company.name, 'Maeving Ltd');
+
+  const devol = result.dropped.find((d) => d.company.domain === 'devolkitchens.com');
+  assert.equal(devol?.stage, 'scoring');
 
   // NMS scored 56 — real, but below the floor, and dropped with a reason.
   const nms = result.dropped.find((d) => d.company.domain === 'nmsinfrastructure.com');

@@ -18,8 +18,11 @@ import type {
   IsoDate,
 } from '../domain.ts';
 import type { ClientProfile } from '../pipeline.ts';
+import type { ExtractedClaim, SignalPolarity } from './extraction.ts';
 import type { ScoreJudgements } from '../scoring.ts';
 import type { FreshnessResult } from '../freshness.ts';
+
+export type { SignalPolarity };
 
 export interface SearchResult {
   query: string;
@@ -62,8 +65,6 @@ export interface ExtractionRequest {
  * question is never "is this company growing?" but "does this change create a
  * commercially actionable consequence for this client?".
  */
-export type SignalPolarity = 'demand_increasing' | 'demand_reducing' | 'neutral';
-
 export interface CommercialConsequence {
   actionable: boolean;
   rationale: string;
@@ -74,9 +75,18 @@ export interface ExtractionOutput {
   trigger: string;
   whatChanged: string;
   polarity: SignalPolarity;
+  /**
+   * Why that polarity — an extracted judgement, kept separate from the
+   * evidence and validated against it rather than trusted.
+   */
+  polarityRationale: string;
   /** Does this change create something the client can act on commercially? */
   consequence: CommercialConsequence;
-  facts: Fact[];
+  /**
+   * Structured claims, NOT Facts. The engine classifies each source, runs the
+   * identity gate, and only then promotes a claim to a Fact.
+   */
+  claims: ExtractedClaim[];
   inferences: Inference[];
   hypothesis: Hypothesis;
   owningFunction: DecisionMakerRole;
@@ -100,6 +110,9 @@ export interface ResearchSignal {
   eventDate?: IsoDate;
   discoveredAt: IsoDate;
   polarity: SignalPolarity;
+  polarityRationale: string;
+  /** Warnings where the declared polarity disagrees with the evidence. */
+  polarityWarnings: string[];
   consequence: CommercialConsequence;
   /** Sources dropped before the corpus, on identity grounds. */
   identityRejections: { url: string; status: string; explanation: string }[];
@@ -136,7 +149,8 @@ export type RejectionStage =
   | 'no_commercial_consequence'
   | 'stale'
   | 'contradiction'
-  | 'invalid_chain';
+  | 'invalid_chain'
+  | 'invalid_claims';
 
 /**
  * A researched company that produced nothing. Recording these is not

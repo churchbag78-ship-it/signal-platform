@@ -12,12 +12,9 @@
  * the identity gate meaningful rather than circular.
  */
 
-import type {
-  Fact,
-  Hypothesis,
-  Inference,
-  SourceAttribution,
-} from '../src/domain.ts';
+import type { Fact, Hypothesis, Inference, SourceAttribution } from '../src/domain.ts';
+import type { ClaimTopic } from '../src/research/registry.ts';
+import { asClaims } from './legacy-adapter.ts';
 import type { CaptureFile } from '../src/research/agent-bridge.ts';
 import type { ExtractionCorpus } from '../src/research/corpus.ts';
 import { toSource } from '../src/research/sources.ts';
@@ -38,7 +35,7 @@ function fact(
     kind: 'fact',
     id,
     statement,
-    source: toSource(url, options.ownedDomains ?? [], options.originId),
+    source: toSource(url, { ownedDomains: options.ownedDomains ?? [] }, options.originId),
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
     verification: 'search_summary_only',
@@ -61,6 +58,33 @@ const hyp = (
   reasoning: string,
   testableBy: string,
 ): Hypothesis => ({ kind: 'hypothesis', id, statement, derivedFrom, reasoning, testableBy });
+
+
+const STATED_MAEVING = {
+  statedName: 'Maeving',
+  statedGeography: { country: UK, town: 'Coventry' },
+  statedIndustry: 'electric motorbike manufacturing',
+};
+const STATED_BALTEX = {
+  statedName: 'Baltex',
+  statedGeography: { country: UK, region: 'Derbyshire', town: 'Ilkeston' },
+  statedIndustry: 'technical textiles',
+};
+const STATED_BRAMBLEFOODS = {
+  statedName: 'Bramble Foods',
+  statedGeography: { country: UK, town: 'Market Harborough' },
+  statedIndustry: 'fine food manufacturing and distribution',
+};
+const STATED_DEVOLKITCHENS = {
+  statedName: 'deVOL Kitchens',
+  statedGeography: { country: UK, town: 'Loughborough' },
+  statedIndustry: 'handmade kitchens',
+};
+const STATED_SLACKANDPARR = {
+  statedName: 'Slack & Parr',
+  statedGeography: { country: UK, town: 'Kegworth' },
+  statedIndustry: 'precision pump manufacturing',
+};
 
 const DEVOL_DOMAINS = ['devolkitchens.com', 'devolkitchens.co.uk'];
 
@@ -252,12 +276,14 @@ export const liveExtractionsV2: ExtractionCorpus = {
     whatChanged:
       '£3m UKEF-backed trade finance facility to build production capacity for the US, Germany and France, adding 13 jobs, against US sales already up fivefold year on year.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'v2 capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Funded volume growth on existing export lanes, carrying Class 9 batteries — more consignments and more documentation.',
     },
-    facts: [
+    claims: asClaims([
       fact(
         'v2-maeving-f1',
         'Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at Coventry.',
@@ -281,7 +307,7 @@ export const liveExtractionsV2: ExtractionCorpus = {
           statedIndustry: 'electric motorcycles',
         },
       ),
-    ],
+    ], STATED_MAEVING, 'export_trade'),
     inferences: [
       inf(
         'v2-maeving-i1',
@@ -326,12 +352,14 @@ export const liveExtractionsV2: ExtractionCorpus = {
     whatChanged:
       'Targeting the USA following Boeing approval, alongside a seven-figure HSBC package funding EU trade flows and a stated 20% export growth target. Exports are already 60% of the business.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'v2 capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'A new US aerospace lane is freight that does not yet exist, on top of a fifth more volume across existing EU and UK–Poland routes.',
     },
-    facts: [
+    claims: asClaims([
       fact(
         'v2-baltex-f1',
         'Baltex, headquartered in Ilkeston, Derbyshire, received a seven-figure HSBC UK package; TradePay supports EU imports and exports, with investment split between the UK and Poland.',
@@ -355,7 +383,7 @@ export const liveExtractionsV2: ExtractionCorpus = {
           statedIndustry: 'knitted technical textiles',
         },
       ),
-    ],
+    ], STATED_BALTEX, 'export_trade'),
     inferences: [
       inf(
         'v2-baltex-i1',
@@ -400,12 +428,14 @@ export const liveExtractionsV2: ExtractionCorpus = {
     whatChanged:
       'Opened Lancaster House, a 67,000 sq ft main UK distribution hub, while continuing an acquisitive strategy (Whitakers Chocolates January 2025, The Bay Tree January 2024).',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'v2 capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Storage is closed by the new hub, but outbound volume, acquisition integration and Q4 peak overflow all grow.',
     },
-    facts: [
+    claims: asClaims([
       fact(
         'v2-bramble-f1',
         'Bramble Foods of Market Harborough opened a 67,000 sq ft national distribution centre, Lancaster House, at Airfield Business Park.',
@@ -442,7 +472,7 @@ export const liveExtractionsV2: ExtractionCorpus = {
           statedIndustry: 'pallet pooling and supply chain logistics',
         },
       ),
-    ],
+    ], STATED_BRAMBLEFOODS, 'premises'),
     inferences: [
       inf(
         'v2-bramble-i1',
@@ -486,12 +516,14 @@ export const liveExtractionsV2: ExtractionCorpus = {
     whatChanged:
       'Established new overseas markets in Thailand, China and Denmark, with 31% of sales exported and overseas revenue up 2,300% over six years.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'v2 capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'New Asian and Nordic lanes need crating, consolidation and customs decisions that the US-focused arrangement was not built for.',
     },
-    facts: [
+    claims: asClaims([
       fact(
         'v2-devol-f1',
         'deVOL has grown overseas revenue by 2,300% over six years, with 31% of sales exported, orders from over 35 countries, and new overseas markets established in Thailand, China and Denmark.',
@@ -527,7 +559,7 @@ export const liveExtractionsV2: ExtractionCorpus = {
           statedIndustry: 'luxury kitchens',
         },
       ),
-    ],
+    ], STATED_DEVOLKITCHENS, 'export_trade'),
     inferences: [
       inf(
         'v2-devol-i1',
@@ -583,12 +615,14 @@ export const liveExtractionsV2: ExtractionCorpus = {
     whatChanged:
       'Considering the loss of up to 40 roles at Kegworth, citing dramatically slowing investment in Chinese and Far East markets, tariffs in new export markets and rising domestic costs.',
     polarity: 'demand_reducing',
+    polarityRationale:
+      'v2 capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: false,
       rationale:
         'Export volumes are contracting and cost is being cut, so freight demand is falling — there is nothing here for a freight forwarder to sell into. Recorded as a real, current signal with negative polarity rather than discarded: a cost-reduction or restructuring vendor would read the same change as an opportunity.',
     },
-    facts: [
+    claims: asClaims([
       fact(
         'v2-slackparr-f1',
         'Slack & Parr is considering the loss of up to 40 roles at Kegworth, citing dramatically slowing investment in Chinese and Far East markets, the imposition of tariffs in new export markets, and significant increases in domestic business costs.',
@@ -600,7 +634,7 @@ export const liveExtractionsV2: ExtractionCorpus = {
           statedIndustry: 'precision pump manufacturing',
         },
       ),
-    ],
+    ], STATED_SLACKANDPARR, 'restructuring'),
     inferences: [
       inf(
         'v2-slackparr-i1',

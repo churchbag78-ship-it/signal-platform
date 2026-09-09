@@ -14,19 +14,17 @@ import type {
   CompanyIdentity,
   Fact,
   IdentityFingerprint,
-  IdentityVerdict,
   IsoDate,
-  SourceAttribution,
 } from '../domain.ts';
 import { normalizeDomain, toCompanyIdentity } from '../domain.ts';
 import {
   factsToEvidence,
-  isFact,
   pruneChain,
   supportingFacts,
   validateChain,
 } from '../claims.ts';
-import { attributeSource, ownedDomains } from '../identity.ts';
+import { ownedDomains } from '../identity.ts';
+import { promoteToFact, validatePolarity } from './extraction.ts';
 import { assessFreshness } from '../freshness.ts';
 import { assessEvidence } from '../evidence.ts';
 import type { ClientProfile, ResearchAdapter } from '../pipeline.ts';
@@ -117,15 +115,6 @@ export function deriveEvidenceQuality(claims: Claim[], hypothesisId: string): nu
   return Math.min(15, tierPoints + independencePoints + verificationPoints);
 }
 
-/**
- * Falls back to the source URL when an extractor supplied no attribution.
- * A source with no attribution can still be resolved by its host, but it can
- * never reach "match" on name alone — which is the point.
- */
-function attributionFor(fact: Fact): SourceAttribution {
-  return fact.attribution ?? { url: fact.source.url };
-}
-
 export class WebResearchAdapter implements ResearchAdapter {
   readonly #options: WebResearchOptions;
 
@@ -206,57 +195,83 @@ export class WebResearchAdapter implements ResearchAdapter {
       };
     }
 
-    // --- IDENTITY GATE ----------------------------------------------------
-    // Nothing reaches the evidence corpus until it has been attributed to this
-    // company. A matching name is never sufficient on its own.
-    const owned = ownedDomains(target);
+    // --- CLAIM PROMOTION AND IDENTITY GATE -------------------------------
+    // Extractors produce structured claims, never Facts. Each claim is
+    // schema-validated, its source classified in the context of the claim's
+    // topic, and its attributes put through the identity gate. Only then does
+    // it become a Fact. A Fact without a valid source cannot be constructed.
     const accepted: Fact[] = [];
     const rejectedIds = new Set<string>();
     const identityRejections: { url: string; status: string; explanation: string }[] = [];
+    const claimErrors: string[] = [];
     let collisions = 0;
 
-    for (const fact of extraction.facts) {
-      const verdict: IdentityVerdict = attributeSource(target, attributionFor(fact));
+    for (const extractedClaim of extraction.claims) {
+      const outcome = promoteToFact(extractedClaim, target, this.#options.runDate);
 
-      if (verdict.status === 'match') {
-        accepted.push({ ...fact, identity: verdict });
+      if (outcome.status === 'promoted') {
+        accepted.push(outcome.fact);
         continue;
       }
 
-      rejectedIds.add(fact.id);
+      rejectedIds.add(extractedClaim.id);
+
+      if (outcome.status === 'invalid') {
+        claimErrors.push(...outcome.errors);
+        identityRejections.push({
+          url: extractedClaim.sourceUrl,
+          status: 'invalid_claim',
+          explanation: outcome.errors.join('; '),
+        });
+        continue;
+      }
+
       identityRejections.push({
-        url: fact.source.url,
-        status: verdict.status,
-        explanation: verdict.explanation,
+        url: extractedClaim.sourceUrl,
+        status: outcome.verdict.status,
+        explanation: outcome.verdict.explanation,
       });
-      if (verdict.status === 'identity_collision') collisions += 1;
+      if (outcome.verdict.status === 'identity_collision') collisions += 1;
     }
 
     if (accepted.length === 0) {
-      const collision = collisions > 0;
+      const onlySchemaFailures = claimErrors.length > 0 && identityRejections.every(
+        (r) => r.status === 'invalid_claim',
+      );
+
       return {
         outcome: 'no_signal',
         rejection: {
           company,
-          stage: collision ? 'identity_collision' : 'identity_unresolved',
-          reason: collision
-            ? 'every source describes a different company with a similar name'
-            : 'no source could be confidently attributed to this company',
+          stage: onlySchemaFailures
+            ? 'invalid_claims'
+            : collisions > 0
+              ? 'identity_collision'
+              : 'identity_unresolved',
+          reason: onlySchemaFailures
+            ? 'every extracted claim failed validation'
+            : collisions > 0
+              ? 'every source describes a different company with a similar name'
+              : 'no source could be confidently attributed to this company',
           queriesRun: queries,
+          ...(claimErrors.length > 0 ? { errors: claimErrors } : {}),
           identityRejections,
         },
       };
     }
 
-    const fullChain: Claim[] = [
-      ...extraction.facts,
-      ...extraction.inferences,
-      extraction.hypothesis,
-    ];
-    // Conclusions drawn from a rejected source must not outlive it.
-    const claims = pruneChain(fullChain, rejectedIds).map((claim) =>
-      isFact(claim) ? (accepted.find((f) => f.id === claim.id) ?? claim) : claim,
+    // Polarity is an extracted judgement, checked against the evidence rather
+    // than trusted. Warnings travel with the signal; they do not silently
+    // rewrite it.
+    const polarityCheck = validatePolarity(
+      extraction.claims.filter((c) => !rejectedIds.has(c.id)),
+      extraction.polarity,
+      extraction.polarityRationale,
     );
+
+    const fullChain: Claim[] = [...accepted, ...extraction.inferences, extraction.hypothesis];
+    // Conclusions drawn from a rejected source must not outlive it.
+    const claims = pruneChain(fullChain, rejectedIds);
 
     if (!claims.some((c) => c.id === extraction.hypothesis.id)) {
       return {
@@ -353,6 +368,8 @@ export class WebResearchAdapter implements ResearchAdapter {
       ...(eventDate ? { eventDate } : {}),
       discoveredAt: this.#options.runDate,
       polarity: extraction.polarity,
+      polarityRationale: extraction.polarityRationale,
+      polarityWarnings: polarityCheck.warnings,
       consequence: extraction.consequence,
       identityRejections,
       claims,
@@ -383,7 +400,6 @@ export class WebResearchAdapter implements ResearchAdapter {
       claims,
     };
 
-    void owned;
     return { outcome: 'signal', signal, candidate };
   }
 

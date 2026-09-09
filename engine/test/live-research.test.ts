@@ -14,7 +14,7 @@ import { CorpusClaimExtractor } from '../src/research/corpus.ts';
 import { HttpSearchClient, SEARCH_PRESETS, searchClientFromEnv } from '../src/research/http-search.ts';
 import { runPipeline } from '../src/pipeline.ts';
 import { orbitalDirect, pilotATargets } from '../fixtures/pilot-a.ts';
-import { liveCaptureV2, liveExtractionsV2 } from '../fixtures/pilot-a-live-v2.ts';
+import { liveCaptureV3, liveExtractionsV3 } from '../fixtures/pilot-a-live-v3.ts';
 import type { ClientProfile } from '../src/pipeline.ts';
 import type { CompanyIdentity } from '../src/domain.ts';
 
@@ -64,23 +64,27 @@ test('disambiguation can be turned off to replay an older capture', () => {
 test("a company's own site on another TLD needs an alias to count as first-party", () => {
   // Live run: deVOL's own devolkitchens.co.uk scored tier 4 against a target
   // declaring devolkitchens.com, which dropped the row to the aggregator cap.
-  const withoutAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', ['devolkitchens.com']);
+  const withoutAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', { ownedDomains: ['devolkitchens.com'] });
   assert.equal(withoutAlias.tier, 4);
 
-  const withAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', [
-    'devolkitchens.com',
-    'devolkitchens.co.uk',
-  ]);
+  const withAlias = classifySource('https://www.devolkitchens.co.uk/blog/x', {
+    ownedDomains: ['devolkitchens.com', 'devolkitchens.co.uk'],
+  });
   assert.equal(withAlias.tier, 1);
-  assert.equal(withAlias.type, 'first_party');
+  assert.equal(withAlias.category, 'first_party');
 });
 
 test('an unrecognised trade title is flagged for review, not silently trusted', () => {
-  // kbbfocus.com is a real kitchen-industry title the registry does not know.
-  const result = classifySource('https://kbbfocus.com/news/3895-devol-kitchens');
+  // kbbfocus.com was the original example here and has since been added to the
+  // registry, which is how coverage is supposed to improve. The rule itself is
+  // unchanged: anything still unknown stays conservative.
+  const unknown = classifySource('https://some-kitchen-blog.example/news/1', { topic: 'product' });
+  assert.equal(unknown.tier, 4);
+  assert.equal(unknown.needsReview, true);
 
-  assert.equal(result.tier, 4);
-  assert.equal(result.needsReview, true);
+  const registered = classifySource('https://kbbfocus.com/news/3895', { topic: 'product' });
+  assert.equal(registered.tier, 3);
+  assert.equal(registered.needsReview, false);
 });
 
 // --- agent bridge transport ------------------------------------------------
@@ -199,8 +203,8 @@ function prescreen(company: CompanyIdentity): string | null {
 
 function liveAdapter(withPrescreen = true) {
   return new WebResearchAdapter({
-    search: new AgentBridgeSearchClient(liveCaptureV2),
-    extractor: new CorpusClaimExtractor(liveExtractionsV2),
+    search: new AgentBridgeSearchClient(liveCaptureV3),
+    extractor: new CorpusClaimExtractor(liveExtractionsV3),
     targets: pilotATargets,
     runDate: RUN_DATE,
     maxQueriesPerCompany: 2,
@@ -242,10 +246,13 @@ test('the live run reports only what clears the floor, and explains the rest', a
     reportableFloor: 60,
   });
 
-  assert.equal(result.opportunities.length, 3);
+  // Four, not three: expanding the registry stopped two legitimate publishers
+  // being scored as unknown hosts, which returned Bramble to a reportable
+  // score. More evidence recognised, not a lowered bar.
+  assert.equal(result.opportunities.length, 4);
   assert.deepEqual(
     result.opportunities.map((o) => o.company.name),
-    ['Maeving Ltd', 'Baltex', 'deVOL Kitchens'],
+    ['Maeving Ltd', 'Baltex', 'deVOL Kitchens', 'Bramble Group'],
   );
 
   // Every company in scope is accounted for: reported, rejected or dropped.

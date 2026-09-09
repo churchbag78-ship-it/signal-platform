@@ -20,6 +20,8 @@ import type { ClientProfile } from '../src/pipeline.ts';
 import type { ExtractionCorpus } from '../src/research/corpus.ts';
 import type { SearchResult } from '../src/research/types.ts';
 import { toSource } from '../src/research/sources.ts';
+import type { ClaimTopic } from '../src/research/registry.ts';
+import { asClaims } from './legacy-adapter.ts';
 
 const RUN_DATE = '2026-09-08';
 
@@ -151,7 +153,7 @@ function fact(
     kind: 'fact',
     id,
     statement,
-    source: toSource(url, ownedDomains, originId),
+    source: toSource(url, { ownedDomains }, originId),
     ...(eventDate ? { eventDate } : {}),
     discoveredAt: RUN_DATE,
     // Page fetching was blocked; nothing in this corpus was opened at source.
@@ -180,8 +182,12 @@ function hypothesis(
  * the identity gate, so it must never be derived from the target fingerprint:
  * that would make every source trivially match itself.
  */
-function withAttribution(facts: Fact[], stated: Omit<SourceAttribution, 'url'>): Fact[] {
-  return facts.map((f) => ({ ...f, attribution: { url: f.source.url, ...stated } }));
+function withAttribution(
+  facts: Fact[],
+  stated: Omit<SourceAttribution, 'url'>,
+  topic: ClaimTopic = 'general',
+) {
+  return asClaims(facts, stated, topic);
 }
 
 /** Search results as captured. Trimmed to those that carried a claim. */
@@ -233,12 +239,14 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Took a £3m UK Export Finance-backed trade finance facility to build production capacity for the US, German and French markets, adding 13 jobs at Coventry.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Funded export scale-up on a regulated cargo type: more consignments, more documentation.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'maeving-f1',
         'Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at its Coventry base.',
@@ -260,7 +268,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         undefined,
         ['maeving.com'],
       ),
-    ], { statedName: 'Maeving', statedGeography: { country: 'United Kingdom', town: 'Coventry' }, statedIndustry: 'electric motorbike manufacturing' }),
+    ], { statedName: 'Maeving', statedGeography: { country: 'United Kingdom', town: 'Coventry' }, statedIndustry: 'electric motorbike manufacturing' }, 'export_trade'),
     inferences: [
       inference(
         'maeving-i1',
@@ -311,12 +319,14 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Closed a seven-figure HSBC package built around EU import/export flows, with a stated expectation of 20% export growth over twelve months and manufacturing in both the UK and Poland.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'A new US lane plus 20% more EU volume is new freight to be arranged.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       // All five outlets carried one HSBC release: one origin, not five sources.
       fact(
         'baltex-f1',
@@ -332,7 +342,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         '2026-07-20',
         'hsbc-baltex-release',
       ),
-    ], { statedName: 'Baltex', statedGeography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' }, statedIndustry: 'technical textiles' }),
+    ], { statedName: 'Baltex', statedGeography: { country: 'United Kingdom', region: 'Derbyshire', town: 'Ilkeston' }, statedIndustry: 'technical textiles' }, 'export_trade'),
     inferences: [
       inference(
         'baltex-i1',
@@ -377,12 +387,14 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Opened Lancaster House, a purpose-built 67,000 sq ft main UK distribution hub, supporting up to 50 new roles while expanding product range and customer base.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Storage is closed, but outbound volume and Q4 peak overflow both grow.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'bramble-f1',
         'Bramble Foods has moved into Lancaster House, a purpose-built 67,000 sq ft distribution centre at Airfield Business Park, as its main UK distribution hub.',
@@ -401,7 +413,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://www.grocerygazette.co.uk/2026/07/31/bramble-foods-opens-new-distribution-hub-and-eyes-expansion/',
         '2026-07-31',
       ),
-    ], { statedName: 'Bramble Foods', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'fine food manufacturing and distribution' }),
+    ], { statedName: 'Bramble Foods', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'fine food manufacturing and distribution' }, 'premises'),
     inferences: [
       inference(
         'bramble-i1',
@@ -452,12 +464,14 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Recognised in the 2026 King\'s Awards for Enterprise for International Trade, while supplying US showrooms in New York and Los Angeles from Leicestershire production.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'New Asian and Nordic lanes need crating and consolidation decisions now.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'devol-f1',
         'deVOL Kitchens is among six Leicestershire recipients of the 2026 King\'s Awards for Enterprise, in the International Trade category.',
@@ -470,7 +484,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         'https://www.kbbreview.com/22981/topstory/devol-opens-showroom-in-new-york/',
         undefined,
       ),
-    ], { statedName: 'deVOL Kitchens', statedGeography: { country: 'United Kingdom', town: 'Loughborough' }, statedIndustry: 'handmade kitchens and interiors' }),
+    ], { statedName: 'deVOL Kitchens', statedGeography: { country: 'United Kingdom', town: 'Loughborough' }, statedIndustry: 'handmade kitchens and interiors' }, 'export_trade'),
     inferences: [
       inference(
         'devol-i1',
@@ -515,12 +529,14 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Recognised in the 2026 King\'s Awards for Enterprise for International Trade, as an EPCF infrastructure developer delivering turnkey projects in Sub-Saharan Africa.',
     polarity: 'demand_increasing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: true,
       rationale:
         'Project cargo to Sub-Saharan Africa, though logistics may be in-house.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'nms-f1',
         'NMS International Group is among six Leicestershire recipients of the 2026 King\'s Awards for Enterprise, in the International Trade category.',
@@ -535,7 +551,7 @@ export const pilotAExtractions: ExtractionCorpus = {
         undefined,
         ['nmsinfrastructure.com'],
       ),
-    ], { statedName: 'NMS International Group', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'turnkey infrastructure development' }),
+    ], { statedName: 'NMS International Group', statedGeography: { country: 'United Kingdom', town: 'Market Harborough' }, statedIndustry: 'turnkey infrastructure development' }, 'export_trade'),
     inferences: [
       inference(
         'nms-i1',
@@ -583,19 +599,21 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Moved to a 73,000 sq ft headquarters on Long Lane, Kegworth — an event search surfaces as though current.',
     polarity: 'demand_reducing',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: false,
       rationale:
         'Export volumes are contracting and cost is being cut: freight demand is falling, so there is nothing here for this client to sell into. A cost-reduction vendor would read this differently.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'slackparr-f1',
         'Slack & Parr moved into a new 73,000 sq ft headquarters on Long Lane, Kegworth, representing roughly £4.5m of investment, fully operational since February 2021.',
         'https://www.thebusinessdesk.com/eastmidlands/news/2047181-multimillion-pound-loan-sees-manufacturer-move-to-new-hq',
         '2020-11-01',
       ),
-    ], { statedName: 'Slack & Parr', statedGeography: { country: 'United Kingdom', town: 'Kegworth' }, statedIndustry: 'precision pump manufacturing' }),
+    ], { statedName: 'Slack & Parr', statedGeography: { country: 'United Kingdom', town: 'Kegworth' }, statedIndustry: 'precision pump manufacturing' }, 'restructuring'),
     inferences: [
       inference(
         'slackparr-i1',
@@ -626,19 +644,21 @@ export const pilotAExtractions: ExtractionCorpus = {
     trigger: 'new_premises',
     whatChanged: 'Opening a new mega distribution centre in Lutterworth, Leicestershire.',
     polarity: 'neutral',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: false,
       rationale:
         'A competitor expanding is not a commercial consequence for this client.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'bleckmann-f1',
         'Bleckmann, a supply chain management specialist for fashion and lifestyle brands, is opening a new mega distribution centre in Lutterworth, Leicestershire.',
         'https://ww.fashionnetwork.com/news/Bleckmann-to-open-another-giant-distribution-centre-in-uk,1825515.html',
         '2026-06-01',
       ),
-    ], { statedName: 'Bleckmann', statedGeography: { country: 'United Kingdom', town: 'Lutterworth' }, statedIndustry: 'third-party logistics' }),
+    ], { statedName: 'Bleckmann', statedGeography: { country: 'United Kingdom', town: 'Lutterworth' }, statedIndustry: 'third-party logistics' }, 'premises'),
     inferences: [],
     hypothesis: hypothesis(
       'bleckmann-h1',
@@ -664,19 +684,21 @@ export const pilotAExtractions: ExtractionCorpus = {
     whatChanged:
       'Opened a £500m, 1.3m sq ft distribution centre at Bardon, Leicestershire — the UK\'s largest supermarket warehouse.',
     polarity: 'neutral',
+    polarityRationale:
+      'legacy capture: polarity recorded before rationale was a required field',
     consequence: {
       actionable: false,
       rationale:
         'Enterprise retailer with its own network — no consequence this client can serve.',
     },
-    facts: withAttribution([
+    claims: withAttribution([
       fact(
         'aldi-f1',
         'Aldi has invested more than £500m in a 1.3m sq ft distribution centre at Bardon, Leicestershire, employing around 1,000 people and serving nearly 350 stores.',
         'https://www.eastmidlandsbusinesslink.co.uk/mag/news/aldi-invests-500m-in-leicestershire-to-establish-britains-largest-supermarket-warehouse/',
         '2026-07-01',
       ),
-    ], { statedName: 'Aldi', statedGeography: { country: 'United Kingdom', town: 'Bardon' }, statedIndustry: 'grocery retail' }),
+    ], { statedName: 'Aldi', statedGeography: { country: 'United Kingdom', town: 'Bardon' }, statedIndustry: 'grocery retail' }, 'premises'),
     inferences: [],
     hypothesis: hypothesis(
       'aldi-h1',

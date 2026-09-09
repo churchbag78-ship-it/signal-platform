@@ -13,7 +13,8 @@
     "pilot-a": "node scripts/pilot-a.ts",
     "pilot-a-live": "node scripts/pilot-a-live.ts",
     "pilot-a-v4": "node scripts/pilot-a-v4.ts",
-    "fidelity": "node scripts/fidelity.ts"
+    "fidelity": "node scripts/fidelity.ts",
+    "benchmark": "node scripts/benchmark.ts"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

@@ -1,0 +1,151 @@
+
+SIGNAL — COMMERCIAL BENCHMARK (engine vs gold set)
+══════════════════════════════════════════════════════════════════════════════
+CLIENT: Orbital Direct Ltd   DATE: 2026-09-09   GOLD ENTRIES: 10
+Gold labels were written from the sources, without reference to engine scores.
+
+
+A. UNVERIFIED RUN — page retrieval blocked (the honest state)
+══════════════════════════════════════════════════════════════════════════════
+
+  CONFUSION
+    true positives 3 · false positives 1 · false negatives 1 · true negatives 4 · never researched 1
+
+  RATES
+    reported                     4
+    precision                    75%
+    false-positive rate          25%  (of reported)
+    false-positive rate          20%  (of true negatives + FP)
+    recall (all gold)            60%
+    recall (researched only)     75%
+    genuine opportunities missed 2
+
+  PER COMPANY
+    NMS International Group      gold A_strong                 ev/high   val/high   false_negative  not reported [no_trigger_found]
+    Maeving Ltd                  gold B_potential              ev/high   val/medium true_positive   #1 70/100 Medium research_further
+    deVOL Kitchens               gold B_potential              ev/high   val/medium true_positive   #3 70/100 Medium research_further
+    Baltex                       gold B_potential              ev/medium val/medium true_positive   #2 70/100 Medium research_further
+    Bramble Group                gold C_weak                   ev/medium val/low    false_positive  #4 68/100 Medium research_further
+    Slack & Parr                 gold F_insufficient_evidence  ev/high   val/low    true_negative   not reported [no_commercial_consequence]
+    Winbro Group Technologies    gold E_no_change              ev/low    val/low    true_negative   not reported [no_trigger_found]
+    Bleckmann                    gold C_weak                   ev/high   val/low    true_negative   not reported [icp] (no research spent)
+    Aldi UK                      gold C_weak                   ev/high   val/low    true_negative   not reported [icp] (no research spent)
+    ADS Laser Cutting Ltd        gold B_potential              ev/medium val/medium not_researched  never put to the engine
+
+  RANKING QUALITY (against gold commercial value)
+    pairs 6 · concordant 3 · discordant 0 · tied on value 3 · tau 1.00
+
+  RECOMMENDED ACTIONS
+    {"research_further":4}
+    draft_outreach   0/4 (0%)
+    research_further 4/4 (100%)
+
+  EVIDENCE QUALITY (engine confidence vs gold evidence grade)
+    agreement 2/4 (50%)
+    understated: Maeving Ltd — engine Medium, gold high
+    understated: deVOL Kitchens — engine Medium, gold high
+
+  COMMERCIAL VALUE (engine score band vs gold value grade)
+    agreement 3/4 (75%)
+    overstated:  Bramble Group — engine medium, gold low
+
+
+B. RECONSTRUCTED RUN — verification path exercised (NOT live verification)
+══════════════════════════════════════════════════════════════════════════════
+
+  CONFUSION
+    true positives 3 · false positives 1 · false negatives 1 · true negatives 4 · never researched 1
+
+  RATES
+    reported                     4
+    precision                    75%
+    false-positive rate          25%  (of reported)
+    false-positive rate          20%  (of true negatives + FP)
+    recall (all gold)            60%
+    recall (researched only)     75%
+    genuine opportunities missed 2
+
+  PER COMPANY
+    NMS International Group      gold A_strong                 ev/high   val/high   false_negative  not reported [no_trigger_found]
+    Maeving Ltd                  gold B_potential              ev/high   val/medium true_positive   #1 78/100 High draft_outreach
+    deVOL Kitchens               gold B_potential              ev/high   val/medium true_positive   #3 74/100 Medium call
+    Baltex                       gold B_potential              ev/medium val/medium true_positive   #2 77/100 Medium draft_outreach
+    Bramble Group                gold C_weak                   ev/medium val/low    false_positive  #4 69/100 Medium call
+    Slack & Parr                 gold F_insufficient_evidence  ev/high   val/low    true_negative   not reported [no_commercial_consequence]
+    Winbro Group Technologies    gold E_no_change              ev/low    val/low    true_negative   not reported [no_trigger_found]
+    Bleckmann                    gold C_weak                   ev/high   val/low    true_negative   not reported [icp] (no research spent)
+    Aldi UK                      gold C_weak                   ev/high   val/low    true_negative   not reported [icp] (no research spent)
+    ADS Laser Cutting Ltd        gold B_potential              ev/medium val/medium not_researched  never put to the engine
+
+  RANKING QUALITY (against gold commercial value)
+    pairs 6 · concordant 3 · discordant 0 · tied on value 3 · tau 1.00
+
+  RECOMMENDED ACTIONS
+    {"draft_outreach":2,"call":2}
+    draft_outreach   2/4 (50%)
+    research_further 0/4 (0%)
+    outreach recommended on non-A rows: Maeving Ltd, Baltex
+
+  EVIDENCE QUALITY (engine confidence vs gold evidence grade)
+    agreement 3/4 (75%)
+    understated: deVOL Kitchens — engine Medium, gold high
+
+  COMMERCIAL VALUE (engine score band vs gold value grade)
+    agreement 1/4 (25%)
+    overstated:  Maeving Ltd — engine high, gold medium
+    overstated:  Baltex — engine high, gold medium
+    overstated:  Bramble Group — engine medium, gold low
+
+
+TWO-AXIS MATRIX (gold evidence x gold commercial value)
+══════════════════════════════════════════════════════════════════════════════
+  Rows: evidence quality. Columns: commercial value. * = reported by the engine.
+
+              value high            value medium          value low             
+    ev high   NMS                   Maeving*, deVOL*      Slack, Bleckmann, Aldi
+    ev medium —                     Baltex*, ADS          Bramble*              
+    ev low    —                     —                     Winbro                
+
+  Read: the engine reported four rows, none of them in the high/high cell.
+  The one high/high entry — NMS — was never surfaced.
+
+
+COMMERCIAL REASONING — tested separately from the evidence
+══════════════════════════════════════════════════════════════════════════════
+  Specificity: "generic" = asserts a logistics need without naming what creates it;
+  "thin" = fewer than two independent anchors (geography, quantity, cargo regime,
+  named service, timing); "specific" = two or more anchors and no generic phrasing.
+  8 generic constructions are searched for.
+
+    company                 hypothesis  angle       why now     consequence   levels
+    Maeving Ltd             specific    specific    specific    thin          3/3
+    Baltex                  specific    specific    specific    thin          3/3
+    deVOL Kitchens          specific    specific    specific    thin          3/3
+    Bramble Group           specific    specific    specific    specific      3/3
+
+  Generic-logistics hallucinations found: 0
+  Thin surfaces (no generic phrasing, but under two anchors): Maeving Ltd/consequence (1 anchor), Baltex/consequence (1 anchor), deVOL Kitchens/consequence (0 anchor)
+  Second-order reasoning: 4/4 reach all three levels; 0 answer their own third-order question.
+  Fully passing all reasoning checks: 1/4
+
+
+FAILURE ACCOUNTING
+══════════════════════════════════════════════════════════════════════════════
+
+  MISSED OPPORTUNITIES BY CAUSE
+    {"source_discovery_failure":1,"reasoning_failure":1,"target_selection_failure":1}
+    NMS International Group      A_strong                 source_discovery_failure
+    Slack & Parr                 F_insufficient_evidence  reasoning_failure
+    ADS Laser Cutting Ltd        B_potential              target_selection_failure
+
+  ENGINE ERRORS BY KIND
+    {"stale_signal":1,"contradiction":1,"value_overstated":1,"reasoning_depth":1}
+    deVOL Kitchens — stale_signal
+      Signal dated 2026-05-06, the King's Award announcement. The award is not the change; the market openings it recognises are undated and span six years. The recency component is therefore scored against the wrong date.
+    Baltex — contradiction
+      The hypothesis asserts a US lane that "does not exist yet" while the fact it rests on states Baltex already has agents in the USA. Same claim, opposite premises, no contradiction recorded.
+    Bramble Group — value_overstated
+      The engine SAW that the hub closes the storage opportunity — it is stated in its own polarity rationale and carried as a caveat — then declared the polarity demand_increasing anyway and reported the row at 69. Noticing a demand-reducing consequence and not letting it move the score is worse than missing it.
+    Slack & Parr — reasoning_depth
+      Rejected at no_commercial_consequence on volume alone. Contraction was treated as terminal; the supplier-review and site-consolidation consequences were never considered.
+

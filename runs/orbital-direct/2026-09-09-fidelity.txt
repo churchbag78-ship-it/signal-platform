@@ -1,0 +1,45 @@
+
+CLAIMEXTRACTOR FIDELITY — real model responses, recorded transport
+══════════════════════════════════════════════════════════════════════════════
+
+maeving-ukef — Maeving Ltd
+──────────────────────────────────────────────────────────────────────────────
+  claims returned: 2  discarded by schema: 0
+  polarity: demand_increasing — A funded production expansion serving named export markets means more outbound cross-border consignments.
+  verdict: PASS
+  note: The MCN URL contains "2026/august" but the snippet states no date. Emitting an event date here would be inference, not extraction.
+
+baltex-boeing — Baltex
+──────────────────────────────────────────────────────────────────────────────
+  claims returned: 2  discarded by schema: 0
+  polarity: demand_increasing — Entering a new export market and forecasting 20% export growth both increase cross-border shipping volume.
+  verdict: PASS
+  note: The snippet does not state Ilkeston; only the query did. An extractor that reports "Ilkeston" is importing the target, not reading the source.
+
+brambles-collision — Bramble Group
+──────────────────────────────────────────────────────────────────────────────
+  claims returned: 1  discarded by schema: 0
+  polarity: neutral — The source describes an ongoing business model rather than a change.
+  verdict: PASS
+  note: A pass here means the extractor stayed an extractor: it reported Australia and pallet pooling, leaving the engine to reach the collision verdict.
+
+slackparr-contraction — Slack & Parr
+──────────────────────────────────────────────────────────────────────────────
+  claims returned: 1  discarded by schema: 0
+  polarity: demand_reducing — Falling overseas demand and an active headcount reduction mean fewer shipments, not more.
+  verdict: PASS
+  note: Polarity must follow the evidence. Reading a redundancy consultation as demand_increasing would be the contradiction the validator exists to catch.
+
+bramble-premises — Bramble Group
+──────────────────────────────────────────────────────────────────────────────
+  claims returned: 1  discarded by schema: 0
+  polarity: demand_increasing — A new national distribution hub changes the company's distribution footprint and the transport flows through it.
+  verdict: PASS
+
+
+SUMMARY
+══════════════════════════════════════════════════════════════════════════════
+  cases: 5  passed: 5  claims: 7
+  findings: 0
+    none
+

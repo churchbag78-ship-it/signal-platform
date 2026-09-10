@@ -1,0 +1,250 @@
+
+SIGNAL COMMERCIAL INTELLIGENCE REPORT
+══════════════════════════════════════════════════════════════════════════════
+CLIENT:            Orbital Direct Ltd
+DATE:              2026-09-08
+COMPANIES SEARCHED: 9
+NUMBER REQUESTED:  50 (reportable floor 60)
+NUMBER RETURNED:   4
+
+FUNNEL
+──────────────────────────────────────────────────────────────────────────────
+  discovered   5
+  identified   5
+  fresh        5
+  scored       4
+  reported     4
+
+OPPORTUNITIES
+══════════════════════════════════════════════════════════════════════════════
+
+1. Maeving Ltd — 70/100
+   PROBABLE_OPPORTUNITY · confidence Medium
+──────────────────────────────────────────────────────────────────────────────
+   TRIGGER        export_finance
+   WHAT CHANGED   Took a £3m UK Export Finance-backed trade finance facility to build production capacity for the US, German and French markets, adding 13 jobs at Coventry.
+   EVENT DATE     2026-08-15
+   DISCOVERED     2026-09-08
+   FRESHNESS      24 days — 30 days or less
+   ICP RELEVANCE  UK manufacturer of physical goods, scaling exports to multiple countries, small enough to have no in-house freight or customs function.
+   OWNING ROLE    Operations / Supply Chain
+                  Production scale-up and export compliance sit with operations at a company of this size; the founders are visible publicly but would not own DG paperwork.
+
+   FACTS
+     • Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at its Coventry base.
+       https://www.gov.uk/government/news/maeving-in-the-right-direction-e-motorbike-maker-gears-up-exports-with-ukef-backing
+       tier 2 · 2026-08-15 · search_summary_only
+     • Maeving won £3m export deal to grow US and Europe sales.
+       https://www.motorcyclenews.com/news/2026/august/maeving-get-3m-government-backed-cash-injection/
+       tier 3 · 2026-08-15 · search_summary_only
+     • Maeving manufactures electric motorcycles, whose lithium-ion batteries are UN3480/UN3481 Class 9 dangerous goods for international carriage.
+       https://maeving.com/en-us/pages/maeving-rm1-electric-motorcycle
+       tier 1 · undated · search_summary_only
+
+   INFERENCES
+     → Export volume to three named markets is committed to rise on a funded timetable, from a company that has until now shipped mainly domestically.
+       because: The facility is explicitly earmarked for production capacity serving named export markets, so the volume increase is funded rather than aspirational.
+     → Each exported unit needs Class 9 dangerous-goods documentation and compliant packing for sea or air carriage.
+       because: Lithium-ion batteries are regulated as Class 9; the obligation attaches to every cross-border movement, not to volume.
+
+   COMMERCIAL HYPOTHESIS
+     ? Maeving is about to scale cross-border shipments of a dangerous-goods product and will need DG documentation, compliant export packing and freight capacity beyond what a domestic-first operation has in place.
+       test: Ask what their current DG documentation process is and who handles it — an in-house answer or a named forwarder kills or qualifies this in one question.
+
+   CONTRADICTIONS
+     ! [caveat] Maeving already sells into the US, so a forwarder relationship may exist; the facility funds scale-up rather than first entry. Contradiction search for delay, recall or administration returned nothing.
+
+   WHY NOW        In August 2026 Maeving took £3m of UKEF-backed finance specifically to build capacity for the US, German and French markets. Export volume steps up on a funded timetable, and every unit crossing a border carries Class 9 batteries needing documentation their domestic operation has not had to produce at scale.
+   SALES ANGLE    You've just taken £3m of UKEF-backed finance to supply the US, Germany and France. The part that usually bites at that point isn't the freight rate — it's Class 9 documentation for the batteries and export packing for a two-wheeler. We handle both, and we're up the road in Loughborough.
+   ACTION         research_further
+                  sources have not been opened; verify before contacting
+
+   SCORE
+     + ICP fit 22/25
+     + signal strength 19/20
+     + recency 15/15 (30 days or less)
+     + evidence quality 13/15 (best tier 1, 3 independent source(s))
+     + commercial relevance 14/15
+     + decision-maker role 10/10 (Operations / Supply Chain)
+     - 10 1 extra inference step(s) between signal and need
+     capped at 70 — sources not opened (search summary only)
+     = 70
+
+2. Baltex — 70/100
+   PROBABLE_OPPORTUNITY · confidence Medium
+──────────────────────────────────────────────────────────────────────────────
+   TRIGGER        export_finance
+   WHAT CHANGED   Closed a seven-figure HSBC package built around EU import/export flows, with a stated expectation of 20% export growth over twelve months and manufacturing in both the UK and Poland.
+   EVENT DATE     2026-07-20
+   DISCOVERED     2026-09-08
+   FRESHNESS      50 days — 31-90 days
+   ICP RELEVANCE  Mid-sized East Midlands manufacturer with active import and export flows and a second production site inside the EU.
+   OWNING ROLE    Supply Chain
+                  Dual-site UK/Poland manufacturing means someone owns the inter-site movement and customs; that is a supply chain role, not finance, despite the trigger being a finance announcement.
+
+   FACTS
+     • Baltex secured a seven-figure funding package from HSBC UK supporting EU imports and exports through TradePay facilities, plus an equity release mortgage funding R&D and manufacturing in the UK and Poland.
+       https://www.thebusinessdesk.com/eastmidlands/news/2112823-derbyshire-textiles-specialist-secures-seven-figure-hsbc-funding-to-drive-exports
+       tier 3 · 2026-07-20 · search_summary_only
+     • Baltex anticipates a 20 per cent increase in export growth over the next twelve months.
+       https://www.themanufacturer.com/articles/baltex-secures-seven-figure-funding-to-drive-european-expansion/
+       tier 3 · 2026-07-20 · search_summary_only
+
+   INFERENCES
+     → Cross-border movement volume between the UK, the EU and Poland is set to rise by roughly a fifth within the year, each leg requiring post-Brexit customs handling.
+       because: The company states the growth figure itself and the funding is structured around the trade flows that produce it.
+
+   COMMERCIAL HYPOTHESIS
+     ? A fifth more cross-border consignments on a UK–Poland–EU route is the point at which existing freight and customs arrangements get renegotiated or outgrown.
+       test: Ask how many EU consignments they run monthly now and who clears them — if a single forwarder handles Poland end to end, this is a displacement sale, not a gap.
+
+   CONTRADICTIONS
+     ! [caveat] Five outlets carried this story but all appear to originate from one HSBC press release — one source, not five. Baltex is a long-established exporter, so an incumbent forwarder is near-certain.
+
+   WHY NOW        On 20 July Baltex closed a seven-figure HSBC package explicitly built around its EU import and export flows, and has publicly committed to 20% export growth over twelve months while running production in both the UK and Poland.
+   SALES ANGLE    You've told the market you expect 20% export growth this year and you're running production in both the UK and Poland. That's a lot of recurring cross-border movements and customs paperwork on a route we run regularly — worth a conversation about what the extra 20% costs you per shipment.
+   ACTION         research_further
+                  sources have not been opened; verify before contacting
+
+   SCORE
+     + ICP fit 23/25
+     + signal strength 17/20
+     + recency 13/15 (31-90 days)
+     + evidence quality 7/15 (best tier 3, 1 independent source(s))
+     + commercial relevance 13/15
+     + decision-maker role 10/10 (Supply Chain)
+     - 10 1 extra inference step(s) between signal and need
+     capped at 70 — sources not opened (search summary only)
+     capped at 75 — single trade-press source
+     = 70
+
+3. Bramble Group — 67/100
+   PROBABLE_OPPORTUNITY · confidence Medium
+──────────────────────────────────────────────────────────────────────────────
+   TRIGGER        new_premises
+   WHAT CHANGED   Opened Lancaster House, a purpose-built 67,000 sq ft main UK distribution hub, supporting up to 50 new roles while expanding product range and customer base.
+   EVENT DATE     2026-07-31
+   DISCOVERED     2026-09-08
+   FRESHNESS      39 days — 31-90 days
+   ICP RELEVANCE  PE-backed Leicestershire food group, right size, expanding range and customer base, with pronounced seasonal peaks.
+   OWNING ROLE    Operations
+                  Site and despatch capacity planning for a new distribution hub sits with operations, who will already be modelling the first peak in it.
+
+   FACTS
+     • Bramble Foods has moved into Lancaster House, a purpose-built 67,000 sq ft distribution centre at Airfield Business Park, as its main UK distribution hub.
+       https://www.leicestershire.gov.uk/news/airfield-feeds-ambitions-as-bramble-expand-onto-business-park
+       tier 2 · 2026-07-31 · search_summary_only
+     • The LDC-backed Bramble Group employs around 300 people and expects the new site to support growth toward 350, taking the facility to increase warehousing and stockholding capacity as it expands product range and customer base.
+       https://www.ldc.co.uk/news/family-food-business-opens-landmark-distribution-centre/
+       tier 4 · 2026-07-31 · search_summary_only
+     • Bramble Group brands include Whitakers Chocolates, The Bay Tree and Lings — confectionery and fine-food gifting lines.
+       https://www.grocerygazette.co.uk/2026/07/31/bramble-foods-opens-new-distribution-hub-and-eyes-expansion/
+       tier 3 · 2026-07-31 · search_summary_only
+
+   INFERENCES
+     → Core warehousing demand has just been met in-house, closing the obvious 3PL storage opportunity.
+       because: A purpose-built main hub is sized for the business that commissioned it; third-party storage is what it replaces.
+     → Confectionery and food gifting are heavily Christmas-weighted, so peak-period volume runs well above the average the building was sized for.
+       because: Seasonal gifting ranges concentrate despatch into Q4 regardless of annual capacity.
+
+   COMMERCIAL HYPOTHESIS
+     ? The opportunity is not storage but Q4 overflow and peak haulage capacity, plus inbound freight on imported ingredients and finished lines.
+       test: Ask what they did for overflow last November and whether the new hub changes that answer.
+
+   CONTRADICTIONS
+     ! [caveat] Material and it cuts against the obvious pitch: the signal is a company solving its own warehousing problem, which closes rather than opens the storage opportunity. The row survives on seasonality and inbound freight only.
+
+   WHY NOW        Bramble opened its main UK distribution hub on 31 July and is expanding both product range and customer base under PE backing. A business that has just sized a building for its average is the business that runs out of space and vehicles in Q4.
+   SALES ANGLE    You've just opened Lancaster House as your main hub, so you don't need warehousing from us today. What you may need in November is somewhere for the overflow and vehicles for the peak — that's the call worth having in September, not December.
+   ACTION         research_further
+                  sources have not been opened; verify before contacting
+
+   SCORE
+     + ICP fit 20/25
+     + signal strength 12/20
+     + recency 13/15 (31-90 days)
+     + evidence quality 12/15 (best tier 2, 3 independent source(s))
+     + commercial relevance 10/15
+     + decision-maker role 10/10 (Operations)
+     - 10 1 extra inference step(s) between signal and need
+     capped at 70 — sources not opened (search summary only)
+     = 67
+
+4. deVOL Kitchens — 62/100
+   PROBABLE_OPPORTUNITY · confidence Medium
+──────────────────────────────────────────────────────────────────────────────
+   TRIGGER        award_international_trade
+   WHAT CHANGED   Recognised in the 2026 King's Awards for Enterprise for International Trade, while supplying US showrooms in New York and Los Angeles from Leicestershire production.
+   EVENT DATE     2026-05-06
+   DISCOVERED     2026-09-08
+   FRESHNESS      125 days — 91-180 days
+   ICP RELEVANCE  Leicestershire manufacturer of bulky, fragile, high-value goods exporting to the US, two miles from the client.
+   OWNING ROLE    Operations / Logistics
+                  Despatch and packing standards for export orders sit with operations; the showroom side does not own how the product travels.
+
+   FACTS
+     • deVOL Kitchens is among six Leicestershire recipients of the 2026 King's Awards for Enterprise, in the International Trade category.
+       https://www.leicestershire.gov.uk/king-honours-six-leicestershire-companies
+       tier 2 · 2026-05-06 · search_summary_only
+     • deVOL opened its first showroom outside the UK in New York, and has since added a Los Angeles showroom; every deVOL kitchen is still made in Leicestershire.
+       https://www.kbbreview.com/22981/topstory/devol-opens-showroom-in-new-york/
+       tier 3 · undated · search_summary_only
+
+   INFERENCES
+     → A recurring flow of bulky, high-value, fragile cabinetry moves from Loughborough to both US coasts.
+       because: US showrooms supplied from UK-only production imply continuing transatlantic freight of finished furniture.
+
+   COMMERCIAL HYPOTHESIS
+     ? Export packing quality, not freight rate, determines whether deVOL's product arrives saleable — which makes crating and handling the point of leverage for a local forwarder.
+       test: Ask what their damage rate on US shipments is and who crates them; a low rate with an incumbent specialist closes this.
+
+   CONTRADICTIONS
+     ! [caveat] An award is a low-strength signal by design — it confirms an established exporter, so this is a displacement conversation, not a new requirement. The US showrooms are not new.
+
+   WHY NOW        The May 2026 King's Award recognises export performance already achieved rather than a change. What makes it worth a call is the cargo: handmade cabinetry made two miles away and shipped to New York and LA is bulky, fragile and high-value, where packing quality decides whether it arrives saleable.
+   SALES ANGLE    Congratulations on the King's Award. You're making kitchens two miles from us and shipping them to New York and LA — high-value, fragile, awkward to crate. If you ever want a second quote on export packing and sea freight from someone local enough to come and look at the load, we're at the other end of Loughborough.
+   ACTION         research_further
+                  sources have not been opened; verify before contacting
+
+   SCORE
+     + ICP fit 22/25
+     + signal strength 8/20
+     + recency 10/15 (91-180 days)
+     + evidence quality 11/15 (best tier 2, 2 independent source(s))
+     + commercial relevance 11/15
+     + decision-maker role 10/10 (Operations / Logistics)
+     - 10 1 extra inference step(s) between signal and need
+     capped at 70 — sources not opened (search summary only)
+     = 62
+
+
+REJECTED — researched and not reported
+══════════════════════════════════════════════════════════════════════════════
+
+  Winbro Group Technologies [no_trigger_found]
+    researched across the client trigger model; no dated commercial change found
+
+  Slack & Parr [stale]
+    signal found but over 12 months and not structural
+
+  Bleckmann [icp]
+    Third-party logistics provider — a competitor, explicitly disqualified in the client profile.
+
+  Aldi UK [icp]
+    Enterprise retailer running its own distribution network — explicitly disqualified in the client profile.
+
+  NMS International Group [scoring]
+    scored 57, below reportable floor 60
+
+
+CONTACT ENRICHMENT
+══════════════════════════════════════════════════════════════════════════════
+  provider: none configured · credits spent: 0
+  Maeving Ltd: not_attempted — score 70 below enrichment threshold 75
+  Baltex: not_attempted — score 70 below enrichment threshold 75
+  Bramble Group: not_attempted — score 67 below enrichment threshold 75
+  deVOL Kitchens: not_attempted — score 62 below enrichment threshold 75
+
+  Every opportunity above stands without contact data. The owning function
+  is identified by reasoning; the person is a later, optional layer.
+

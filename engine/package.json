@@ -1,0 +1,23 @@
+{
+  "name": "@signal/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Signal commercial intelligence engine \u2014 the portable reasoning layer",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "pilot-a": "node scripts/pilot-a.ts",
+    "pilot-a-live": "node scripts/pilot-a-live.ts",
+    "pilot-a-v4": "node scripts/pilot-a-v4.ts",
+    "fidelity": "node scripts/fidelity.ts",
+    "benchmark": "node scripts/benchmark.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^5.6.0"
+  }
+}

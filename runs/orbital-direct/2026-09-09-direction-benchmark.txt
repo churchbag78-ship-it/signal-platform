@@ -1,0 +1,285 @@
+
+SIGNAL — COMMERCIAL BENCHMARK · DISCOVERY MILESTONE
+══════════════════════════════════════════════════════════════════════════════
+CLIENT: Orbital Direct Ltd   DATE: 2026-09-09   GOLD ENTRIES: 10
+PLAN: first-party sweep over 3 of 6 sections · 6 of 16 change families per company
+
+
+DISCOVERY
+══════════════════════════════════════════════════════════════════════════════
+                                            BEFORE         AFTER
+  companies in universe                          9             9
+  companies researched                           7             7
+  prescreened (no research spent)                2             2
+  queries executed                              14            66
+    first-party sweep                            0            24
+    change-family                               14            42
+  change families covered                        0             6
+  first-party sources checked                    0            33
+  sources seen                                  15            94
+  commercial changes found                       5             6
+  signals reaching scoring                       4             4
+  identity collisions caught                     1             0
+  identity unresolved                            0             0
+  stale rejections                               0             1
+  contradiction rejections                       0             0
+  genuine negatives retained                     3             2
+  research failures                              0             0
+
+  QUERIES BY CHANGE FAMILY (after)
+    major_contract          strong      7
+    project                 strong      7
+    new_market              strong      7
+    expansion               strong      7
+    new_premises            strong      7
+    relocation              strong      7
+    manufacturing_change    strong      0   — outside this run’s budget
+    distribution_change     strong      0   — outside this run’s budget
+    acquisition             strong      0   — outside this run’s budget
+    tender                  strong      0   — outside this run’s budget
+    customer_win            strong      0   — outside this run’s budget
+    investment              moderate    0   — outside this run’s budget
+    hiring                  moderate    0   — outside this run’s budget
+    partnership             moderate    0   — outside this run’s budget
+    technology_automation   moderate    0   — outside this run’s budget
+    restructuring           moderate    0   — outside this run’s budget
+
+  FIRST-PARTY SECTIONS
+    newsroom          covered  6 · unchecked  1
+    press_releases    covered  6 · unchecked  1
+    announcements     covered  0 · unchecked  0   — not swept in this run (query budget)
+    projects          covered  6 · unchecked  1
+    investors         covered  0 · unchecked  0   — not swept in this run (query budget)
+    careers           covered  0 · unchecked  0   — not swept in this run (query budget)
+
+  Direct page retrieval was blocked for 7 of 9 companies; the site-scoped search channel carried the sweep.
+
+
+DISCOVERY RECALL — measured separately from downstream precision
+══════════════════════════════════════════════════════════════════════════════
+  Recall counts a genuine opportunity as DISCOVERED when a commercial change was
+  found and reached the pipeline — including when the pipeline then rejected it.
+  Whether that rejection was right is a downstream question, measured below.
+
+  BEFORE  3/5 discovered (60%) · 3 reached scoring
+  AFTER   4/5 discovered (80%) · 3 reached scoring
+
+  still not discovered:
+    ADS Laser Cutting Ltd      not_researched
+
+  false discoveries (signal found where the gold set says no opportunity): 2
+    Bramble Group              gold C_weak
+    Slack & Parr               gold F_insufficient_evidence
+
+  signals recovered that the previous run missed: 1
+    NMS International Group    was no_trigger_found, now produces a signal
+
+
+RESEARCH COST
+══════════════════════════════════════════════════════════════════════════════
+  BEFORE  14 search calls · 0 page fetches attempted
+  AFTER   66 search calls · 42 page fetches attempted
+  Ratio   4.7x the search volume for 1 additional commercial change(s) found.
+  Credits spent: 0. No paid provider was called.
+
+
+BEFORE — v4 template queries (reconstructed verification)
+══════════════════════════════════════════════════════════════════════════════
+
+  confusion   TP 3 · FP 1 · FN 1 · TN 4 · never researched 1
+  rates       reported 4 · precision 75% · FP-rate 25% (of reported) · recall 60% · missed 2
+
+  PER COMPANY
+    NMS International Group    gold A_strong               false_negative  not reported [no_trigger_found]
+    Maeving Ltd                gold B_potential            true_positive   #1 78/100 High draft_outreach
+    deVOL Kitchens             gold B_potential            true_positive   #3 74/100 Medium call
+    Baltex                     gold B_potential            true_positive   #2 77/100 Medium draft_outreach
+    Bramble Group              gold C_weak                 false_positive  #4 69/100 Medium call
+    Slack & Parr               gold F_insufficient_evidence true_negative   not reported [no_commercial_consequence]
+    Winbro Group Technologies  gold E_no_change            true_negative   not reported [no_trigger_found]
+    Bleckmann                  gold C_weak                 true_negative   not reported [icp] (no research spent)
+    Aldi UK                    gold C_weak                 true_negative   not reported [icp] (no research spent)
+    ADS Laser Cutting Ltd      gold B_potential            not_researched  never put to the engine
+
+  ranking     concordant 3 · discordant 0 · tied on value 3 · tau 1.00
+  actions     {"draft_outreach":2,"call":2}
+  evidence    agreement 3/4 (75%), overstated 0
+  value       agreement 1/4 (25%), overstated 3
+    overstated: Maeving Ltd — engine high, gold medium
+    overstated: Baltex — engine high, gold medium
+    overstated: Bramble Group — engine medium, gold low
+
+
+AFTER — v5 discovery, page retrieval blocked (the honest state)
+══════════════════════════════════════════════════════════════════════════════
+
+  confusion   TP 3 · FP 1 · FN 1 · TN 4 · never researched 1
+  rates       reported 4 · precision 75% · FP-rate 25% (of reported) · recall 60% · missed 2
+
+  PER COMPANY
+    NMS International Group    gold A_strong               false_negative  not reported [stale]
+    Maeving Ltd                gold B_potential            true_positive   #1 70/100 Medium research_further
+    deVOL Kitchens             gold B_potential            true_positive   #3 70/100 Medium research_further
+    Baltex                     gold B_potential            true_positive   #2 70/100 Medium research_further
+    Bramble Group              gold C_weak                 false_positive  #4 67/100 Medium research_further
+    Slack & Parr               gold F_insufficient_evidence true_negative   not reported [no_commercial_consequence]
+    Winbro Group Technologies  gold E_no_change            true_negative   not reported [no_trigger_found]
+    Bleckmann                  gold C_weak                 true_negative   not reported [icp] (no research spent)
+    Aldi UK                    gold C_weak                 true_negative   not reported [icp] (no research spent)
+    ADS Laser Cutting Ltd      gold B_potential            not_researched  never put to the engine
+
+  ranking     concordant 3 · discordant 0 · tied on value 3 · tau 1.00
+  actions     {"research_further":4}
+  evidence    agreement 2/4 (50%), overstated 0
+  value       agreement 3/4 (75%), overstated 1
+    overstated: Bramble Group — engine medium, gold low
+
+
+AFTER — v5 discovery (reconstructed verification)
+══════════════════════════════════════════════════════════════════════════════
+
+  confusion   TP 3 · FP 1 · FN 1 · TN 4 · never researched 1
+  rates       reported 4 · precision 75% · FP-rate 25% (of reported) · recall 60% · missed 2
+
+  PER COMPANY
+    NMS International Group    gold A_strong               false_negative  not reported [stale]
+    Maeving Ltd                gold B_potential            true_positive   #1 79/100 High draft_outreach
+    deVOL Kitchens             gold B_potential            true_positive   #3 75/100 High draft_outreach
+    Baltex                     gold B_potential            true_positive   #2 77/100 Medium draft_outreach
+    Bramble Group              gold C_weak                 false_positive  #4 68/100 Medium call
+    Slack & Parr               gold F_insufficient_evidence true_negative   not reported [no_commercial_consequence]
+    Winbro Group Technologies  gold E_no_change            true_negative   not reported [no_trigger_found]
+    Bleckmann                  gold C_weak                 true_negative   not reported [icp] (no research spent)
+    Aldi UK                    gold C_weak                 true_negative   not reported [icp] (no research spent)
+    ADS Laser Cutting Ltd      gold B_potential            not_researched  never put to the engine
+
+  ranking     concordant 3 · discordant 0 · tied on value 3 · tau 1.00
+  actions     {"draft_outreach":3,"call":1}
+  evidence    agreement 4/4 (100%), overstated 0
+  value       agreement 0/4 (0%), overstated 4
+    overstated: Maeving Ltd — engine high, gold medium
+    overstated: deVOL Kitchens — engine high, gold medium
+    overstated: Baltex — engine high, gold medium
+    overstated: Bramble Group — engine medium, gold low
+
+
+TWO-AXIS MATRIX (gold evidence x gold commercial value) — after
+══════════════════════════════════════════════════════════════════════════════
+  Rows: evidence quality. Columns: commercial value. * = reported by the engine.
+
+              value high            value medium          value low             
+    ev high   NMS                   Maeving*, deVOL*      Slack, Bleckmann, Aldi
+    ev medium —                     Baltex*, ADS          Bramble*              
+    ev low    —                     —                     Winbro                
+
+
+COMMERCIAL REASONING — tested separately from the evidence
+══════════════════════════════════════════════════════════════════════════════
+  company                 hypothesis  angle       why now     consequence   levels
+  Maeving Ltd             specific    specific    specific    thin          3/3
+  Baltex                  specific    specific    specific    thin          3/3
+  deVOL Kitchens          specific    specific    specific    thin          3/3
+  Bramble Group           specific    specific    specific    specific      3/3
+
+  Generic-logistics hallucinations: 0 (of 8 constructions searched)
+  Three-level reasoning: 4/4; 0 answer their own third-order question.
+
+
+DURABLE RESEARCH STATE
+══════════════════════════════════════════════════════════════════════════════
+  company                   state                     last checked  queries  first-party
+  ADS Laser Cutting Ltd     signal_found              2026-09-08       1       0
+  Aldi UK                   disqualified              2026-09-09       0       0
+  Baltex                    signal_found              2026-09-09       9       6
+  Bleckmann                 disqualified              2026-09-09       0       0
+  Bramble Group             signal_found              2026-09-09       9       0
+  deVOL Kitchens            signal_found              2026-09-09      12       9
+  Maeving Ltd               signal_found              2026-09-09       9       4
+  NMS International Group   insufficient_evidence     2026-09-09       9       6
+  Slack & Parr              no_commercial_consequence 2026-09-09       9       5
+  Winbro Group Technologies no_trigger_found          2026-09-09       9       3
+
+  Companies known to the store but absent from this run's target list: 1
+    ADS Laser Cutting Ltd — last state signal_found on 2026-09-08. Still in the universe; this run did not re-check it.
+
+
+
+════════ TWO-AXIS SCORING ════════
+Same corpus, same discovery, same researcher judgements. Only the scoring
+model differs from the runs above. Band boundaries (75/60/45) and the
+reportable floor (60) are the single-axis model's own numbers, per axis.
+
+
+TWO-AXIS — page retrieval blocked (the honest state)
+══════════════════════════════════════════════════════════════════════════════
+  company                 evidence        value           quadrant            confidence  action
+  Baltex                  53 low          83 high         RESEARCH_PRIORITY   Low         research_further
+  Maeving Ltd             70 medium       81 high         RESEARCH_PRIORITY   Medium      research_further
+  deVOL Kitchens          70 medium       76 high         RESEARCH_PRIORITY   Medium      research_further
+  Bramble Group           69 medium       64 medium       WATCH               Medium      monitor
+
+  evidence agreement  1/4 (25%) · overstated 0 · understated 3
+    Maeving Ltd: engine medium (70), gold high
+    deVOL Kitchens: engine medium (70), gold high
+    Baltex: engine low (53), gold medium
+  value agreement     0/4 (0%) · overstated 4 · understated 0
+    Maeving Ltd: engine high (81), gold medium
+    deVOL Kitchens: engine high (76), gold medium
+    Baltex: engine high (83), gold medium
+    Bramble Group: engine medium (64), gold low
+  value ordering      concordant 3 · discordant 0 · tied on gold value 3 · tau 1.00
+
+  reported 4 · precision over everything reported 75%
+  call sheet 0 · contact precision n/a
+  reported but held back from contact, correctly: Bramble Group
+  genuine opportunities reported but held back: Maeving Ltd, deVOL Kitchens, Baltex
+
+  axis correlation -0.50 — under one score it is 1 by construction.
+
+
+TWO-AXIS — reconstructed verification
+══════════════════════════════════════════════════════════════════════════════
+  company                 evidence        value           quadrant            confidence  action
+  Baltex                  67 medium       83 high         RESEARCH_PRIORITY   Medium      research_further
+  Maeving Ltd             85 high         81 high         ACT_NOW             High        draft_outreach
+  deVOL Kitchens          91 high         76 high         ACT_NOW             High        draft_outreach
+  Bramble Group           83 high         64 medium       LOW_VALUE           High        monitor
+
+  evidence agreement  3/4 (75%) · overstated 1 · understated 0
+    Bramble Group: engine high (83), gold medium
+  value agreement     0/4 (0%) · overstated 4 · understated 0
+    Maeving Ltd: engine high (81), gold medium
+    deVOL Kitchens: engine high (76), gold medium
+    Baltex: engine high (83), gold medium
+    Bramble Group: engine medium (64), gold low
+  value ordering      concordant 3 · discordant 0 · tied on gold value 3 · tau 1.00
+
+  reported 4 · precision over everything reported 75%
+  call sheet 2 · contact precision 100%
+  reported but held back from contact, correctly: Bramble Group
+  genuine opportunities reported but held back: Baltex
+
+  axis correlation -0.39 — under one score it is 1 by construction.
+
+
+DEMAND DIRECTION — derived from evidence, not from the declared label
+══════════════════════════════════════════════════════════════════════════════
+  company                 declared            grounded            points  agrees
+  Maeving Ltd             demand_increasing   demand_increasing   15      yes
+  Baltex                  demand_increasing   demand_increasing   15      yes
+  Bramble Group           demand_increasing   neutral             7       NO
+      the change increases demand for same-day courier and UK haulage and reduces it for warehousing, e-commerce fulfilment and FBA prep — it cuts both ways, so it is not a growth trigger
+  deVOL Kitchens          demand_increasing   demand_increasing   15      yes
+
+  1 of 4 signals declared a direction the evidence does not support.
+  Offerings the evidence says gain and lose, per signal, are in the run record.
+
+
+SINGLE AXIS vs TWO AXES — the same run, scored both ways
+══════════════════════════════════════════════════════════════════════════════
+  company                 single                  two-axis                          gold (ev/val)
+  Baltex                  77 draft_outreach       ev 67 / val 83 → research_further medium/medium (B_potential)
+  Maeving Ltd             79 draft_outreach       ev 85 / val 81 → draft_outreach   high/medium (B_potential)
+  deVOL Kitchens          75 draft_outreach       ev 91 / val 76 → draft_outreach   high/medium (B_potential)
+  Bramble Group           68 call                 ev 83 / val 64 → monitor          medium/low (C_weak)
+

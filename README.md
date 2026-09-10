@@ -6,6 +6,20 @@ Commercial intelligence platform for discovering, validating, scoring and acting
 
 Research providers → evidence → fusion → contradiction checks → commercial scoring → opportunities → actions → outcomes.
 
+## Current phase — Phase 0: methodology validation
+
+The intelligence methodology is being proven on paper before any of it is
+built into software. Nothing here is an application yet, deliberately.
+
+- [`docs/SIGNAL_PROJECT_STATE.md`](docs/SIGNAL_PROJECT_STATE.md) — where the project stands and why Phase 0 comes first
+- [`docs/RESEARCH_METHODOLOGY.md`](docs/RESEARCH_METHODOLOGY.md) — the intelligence logic: ICP model, signal taxonomy, evidence rules, scoring rubric
+- [`prompts/signal-master-prompt.md`](prompts/signal-master-prompt.md) — the executable master prompt
+- [`docs/VALIDATION_PROTOCOL.md`](docs/VALIDATION_PROTOCOL.md) — how a run is graded, and what "proven" means
+- [`runs/`](runs/) — pilot runs and the per-client duplicate-prevention ledger
+
+The methodology documents are the portable core of Signal. The eventual
+application automates them; it does not replace or hide them.
+
 ## Development
 
 This repository is the source of truth for the production build. Prototype ZIPs are retained only as historical checkpoints and are not part of the installation workflow.

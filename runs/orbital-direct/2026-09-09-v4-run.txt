@@ -1,0 +1,69 @@
+
+SIGNAL — PILOT A v4 (VERIFICATION PIPELINE)
+══════════════════════════════════════════════════════════════════════════════
+CLIENT: Orbital Direct Ltd   DATE: 2026-09-09
+
+A. UNVERIFIED — page retrieval blocked (the honest state)
+══════════════════════════════════════════════════════════════════════════════
+  reported: 4   funnel: {"discovered":4,"identified":4,"fresh":4,"scored":4,"reported":4}
+  verification — page: 0 · snippet: 10 · retrieval failures: 10 · passage mismatches: 0
+  Maeving Ltd                 70/100  raw 87  PROBABLE_OPPORTUNITY   Medium caps: 70 (evidence is search-snippet level; no page was retrieved and verified)
+  Baltex                      70/100  raw 86  PROBABLE_OPPORTUNITY   Medium caps: 70 (evidence is search-snippet level; no page was retrieved and verified)
+  deVOL Kitchens              70/100  raw 83  PROBABLE_OPPORTUNITY   Medium caps: 70 (evidence is search-snippet level; no page was retrieved and verified)
+  Bramble Group               68/100  raw 78  PROBABLE_OPPORTUNITY   Medium caps: 70 (evidence is search-snippet level; no page was retrieved and verified)
+
+B. RECONSTRUCTED — verification path exercised (NOT live verification)
+══════════════════════════════════════════════════════════════════════════════
+  reported: 4   funnel: {"discovered":4,"identified":4,"fresh":4,"scored":4,"reported":4}
+  verification — page: 9 · snippet: 1 · retrieval failures: 1 · passage mismatches: 0
+  Maeving Ltd                 78/100  raw 88  CONFIRMED_OPPORTUNITY  High   caps: none
+  Baltex                      77/100  raw 87  CONFIRMED_OPPORTUNITY  Medium caps: none
+  deVOL Kitchens              74/100  raw 84  PROBABLE_OPPORTUNITY   Medium caps: none
+  Bramble Group               69/100  raw 79  PROBABLE_OPPORTUNITY   Medium caps: none
+
+
+SCORE DISTRIBUTION
+══════════════════════════════════════════════════════════════════════════════
+  A unverified:     n=4 min=68 max=70 spread=2 mean=69.5 [70, 70, 70, 68]
+  B reconstructed:  n=4 min=69 max=78 spread=9 mean=74.5 [78, 77, 74, 69]
+  raw (uncapped):   87, 86, 83, 78
+
+
+REASONING CHAIN — strongest opportunity
+══════════════════════════════════════════════════════════════════════════════
+
+  Maeving Ltd — 78/100 (raw 88)
+
+  FACTS (what a source states)
+    • Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany and France, creating 13 new jobs at Coventry.
+      gov.uk tier 2 · 2026-08-15 · page_retrieved
+      identity: match — name matches and 3 attribute(s) corroborate it
+    • Maeving began exporting to California, Germany and France in 2023, exports around half its bikes, and US sales have risen fivefold this year versus 2024 despite tariff-driven disruption.
+      motorcyclenews.com tier 3 · 2026-08-15 · page_retrieved
+      identity: match — name matches and 3 attribute(s) corroborate it
+
+  INFERENCE (what we concluded)
+    → Consignment volume on established US and European lanes is rising steeply — fivefold on the US lane — with funded capacity behind it and tariff friction to manage.
+      because: The company reports the fivefold increase itself, and the facility funds the capacity to serve it.
+
+  HYPOTHESIS (unproven commercial implication)
+    ? Freight arrangements sized for 2023-era volumes are carrying several times that on a regulated cargo type, in a tariff environment — which is when rates, consolidation and DG documentation get reopened.
+      test: Ask whether their current US arrangement was priced before the fivefold increase, and who handles the Class 9 paperwork.
+
+  CLIENT RELEVANCE   Coventry manufacturer of physical goods, exporting around half its output, scaling on funded capacity.
+  POLARITY           demand_increasing — Funded capacity expansion serving named export markets increases outbound consignment volume on a regulated cargo type.
+  CONSEQUENCE        More cross-border consignments and more Class 9 documentation to produce.
+  OWNING ROLE        Operations / Supply Chain
+  WHY NOW            US sales are up fivefold year on year and in August 2026 Maeving took £3m of UKEF-backed finance to fund the capacity behind it. Arrangements set up when they started exporting in 2023 are now carrying several times the volume, through tariffs.
+  SALES ACTION       draft_outreach — evidence, timing and fit all hold
+  ANGLE              Your US sales are up fivefold and you've just funded the capacity to go further. Worth checking whether your shipping was priced for 2023 volumes or today's — and we can look at the Class 9 battery documentation while we're there.
+
+
+VERIFICATION FAILURES
+══════════════════════════════════════════════════════════════════════════════
+  Bramble Group: https://umbrex.com/resources/company-profiles/brambles-ltd/
+    no fixture page captured for this URL
+
+  A: 10 retrieval failures (all: retrieval unavailable)
+  B: 1 retrieval failures, 0 passage mismatches
+

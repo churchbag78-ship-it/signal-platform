@@ -1,0 +1,8 @@
+run_date,company,domain,signal_type,signal_date,score,confidence,outcome
+2026-09-08,Maeving Ltd,maeving.com,export_finance,2026-08-15,88,Medium,
+2026-09-08,Baltex,baltex.co.uk,export_finance,2026-07-20,75,Medium,
+2026-09-08,Bramble Group,bramblefoods.co.uk,new_premises,2026-07-31,71,Medium,
+2026-09-08,deVOL Kitchens,devolkitchens.com,award_international_trade,2026-05-06,66,Medium,
+2026-09-08,ADS Laser Cutting Ltd,adslaser.co.uk,growth_results,2026-07-31,65,Low,
+2026-09-08,CMS Cepcor,cmscepcor.com,award_international_trade,2026-05-06,63,Medium,
+2026-09-08,Zeeko Ltd,zeeko.co.uk,award_international_trade,2026-05-06,63,Medium,

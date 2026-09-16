@@ -1,0 +1,126 @@
+
+SIGNAL — PILOT A (LIVE RESEARCH)
+══════════════════════════════════════════════════════════════════════════════
+CLIENT:              Orbital Direct Ltd
+DATE:                2026-09-08
+TRANSPORT:           agent WebSearch tool (no search API reachable from process)
+COMPANIES IN SCOPE:  9
+QUERIES EXECUTED:    14
+PROVIDER CREDITS:    0
+PIPELINE TIME:       4ms
+REPORTED:            3 (floor 60)
+
+FUNNEL
+──────────────────────────────────────────────────────────────────────────────
+  discovered   4
+  identified   4
+  fresh        4
+  scored       3
+  reported     3
+
+OPPORTUNITIES
+══════════════════════════════════════════════════════════════════════════════
+
+1. Maeving Ltd — 70/100 (raw 87)
+   PROBABLE_OPPORTUNITY · confidence Medium
+   TRIGGER   export_finance · event 2026-08-15 · 24 days old
+   CHANGED   £3m UKEF-backed trade finance facility to build production capacity for the US, Germany and France, adding 13 jobs, against US sales already up fivefold year on year.
+   ROLE      Operations / Supply Chain
+   FACTS
+     • [tier 2] gov.uk — 2026-08-15
+       Maeving secured a £3m trade finance facility from HSBC UK, backed by UK Export Finance, to invest in production capacity for demand in the US, Germany…
+       https://www.gov.uk/government/news/maeving-in-the-right-direction-e-motorbike-maker-gears-up-exports-with-ukef-backing
+     • [tier 4] thegrowthhub.me — 2026-08-15
+       Maeving began exporting to California, Germany and France in 2023, now exports around half of its bikes, and US sales have risen fivefold this year co…
+       https://thegrowthhub.me/maeving-electric-motorcycle-manufacturing-investment-west-midlands-uk/
+   HYPOTHESIS
+     ? Freight arrangements sized for 2023-era export volumes are being asked to carry several times that, on a regulated cargo type — which is when rates, consolidation and DG documentation get reopened.
+       test: Ask what their US shipping cadence looks like now versus last year, and whether the current arrangement was priced before the fivefold increase.
+   ! [caveat] CORRECTS THE FIXTURE: Maeving is not a domestic-first shipper. It has exported since 2023 and sends roughly half its bikes abroad, so an incumbent forwarder is near-certain and this is a displacement conversation. The fixture inferred a first-time exporter and was wrong.
+   WHY NOW   US sales are up fivefold year on year and in August 2026 Maeving took £3m of UKEF-backed finance to fund the capacity behind that. Freight arrangements set up when they started exporting in 2023 are now carrying several times the volume.
+   ANGLE     Your US sales are up fivefold and you've just funded the capacity to go further. Worth asking whether your shipping was priced for the volume you had in 2023 or the volume you have now — and we can look at the Class 9 documentation side while we're at it.
+   ACTION    research_further
+   SCORE     + ICP fit 22/25 | + signal strength 16/20 | + recency 15/15 (30 days or less) | + evidence quality 11/15 (best tier 2, 2 independent source(s)) | + commercial relevance 13/15 | + decision-maker role 10/10 (Operations / Supply Chain) | - 10 1 extra inference step(s) between signal and need | capped at 70 — sources not opened (search summary only) | = 70
+
+2. Baltex — 70/100 (raw 86)
+   PROBABLE_OPPORTUNITY · confidence Medium
+   TRIGGER   new_market_entry · event 2026-07-20 · 50 days old
+   CHANGED   Targeting the USA market following Boeing approval, alongside a seven-figure HSBC package funding EU trade flows and a stated 20% export growth target.
+   ROLE      Supply Chain
+   FACTS
+     • [tier 3] themanufacturer.com — 2026-07-20
+       Baltex secured a seven-figure HSBC UK package; TradePay facilities support EU imports and exports, with spending split between Ilkeston and Łódź, Pola…
+       https://www.themanufacturer.com/articles/baltex-secures-seven-figure-funding-to-drive-european-expansion/
+     • [tier 3] knittingindustry.com — 2026-07-20
+       Baltex is now also targeting the USA market following an approval from aircraft manufacturer Boeing, and expects 20% export growth over the next 12 mo…
+       https://knittingindustry.com/uks-baltex-accelerates-international-strategy/
+   HYPOTHESIS
+     ? A brand-new US aerospace lane needs freight and customs arrangements that do not exist yet, and aerospace consignments carry documentation and traceability requirements beyond ordinary export paperwork.
+       test: Ask whether US shipments have started yet and who is handling the first ones — before it is handled, this is open; after, it is displacement.
+   ! [caveat] Multiple outlets carried this from one HSBC release — one independent source, not several. Baltex is a long-established exporter to the EU, so only the US lane is genuinely new.
+   WHY NOW   Baltex has cleared Boeing approval and named the USA as a new target market, on top of a July 2026 HSBC package funding EU trade and a stated 20% export growth target. A US aerospace lane is a route they have not shipped before.
+   ANGLE     Boeing approval opens a US lane you haven't run before. First shipments into an aerospace supply chain are where documentation and traceability trip people up — worth a conversation before the first one goes, not after.
+   ACTION    research_further
+   SCORE     + ICP fit 23/25 | + signal strength 18/20 | + recency 13/15 (31-90 days) | + evidence quality 8/15 (best tier 3, 2 independent source(s)) | + commercial relevance 14/15 | + decision-maker role 10/10 (Supply Chain) | - 10 1 extra inference step(s) between signal and need | capped at 70 — sources not opened (search summary only) | = 70
+
+3. Bramble Group — 63/100 (raw 73)
+   PROBABLE_OPPORTUNITY · confidence Medium
+   TRIGGER   new_premises · event 2026-07-31 · 39 days old
+   CHANGED   Opened Lancaster House, a 67,000 sq ft main UK distribution hub, expanding product range and customer base with up to 50 new roles.
+   ROLE      Operations
+   FACTS
+     • [tier 4] ldc.co.uk — 2026-07-31
+       Bramble Foods opened a 67,000 sq ft national distribution centre, Lancaster House, at Airfield Business Park, opened alongside managing director Tony …
+       https://www.ldc.co.uk/news/family-food-business-opens-landmark-distribution-centre/
+     • [tier 3] grocerygazette.co.uk — 2026-07-31
+       The site becomes the main UK distribution hub, increasing warehousing and stockholding capacity as the group expands product range and customer base; …
+       https://www.grocerygazette.co.uk/2026/07/31/bramble-foods-opens-new-distribution-hub-and-eyes-expansion/
+   HYPOTHESIS
+     ? The opportunity is outbound haulage and seasonal peak overflow rather than storage — a hub sized for the average will be tested by a food-gifting Q4.
+       test: Ask what they did for overflow last November and whether Lancaster House changes that answer.
+   ! [caveat] The signal is a company solving its own warehousing problem, which closes the obvious storage pitch. Survives on peak overflow and outbound haulage only.
+   ! [caveat] IDENTITY: the trigger query for this company returned Brambles Ltd (CHEP pallets, Australia) — an unrelated business. No claim was taken from it.
+   WHY NOW   Bramble opened its main UK distribution hub on 31 July while expanding range and customer base. The building is sized for the average; food gifting is not an average business in Q4.
+   ANGLE     You've just opened Lancaster House, so storage isn't the conversation. Overflow and vehicles for the Christmas peak might be — and that's a September conversation, not a December one.
+   ACTION    research_further
+   SCORE     + ICP fit 20/25 | + signal strength 12/20 | + recency 13/15 (31-90 days) | + evidence quality 8/15 (best tier 3, 2 independent source(s)) | + commercial relevance 10/15 | + decision-maker role 10/10 (Operations) | - 10 1 extra inference step(s) between signal and need | capped at 70 — sources not opened (search summary only) | = 63
+
+
+REJECTED
+══════════════════════════════════════════════════════════════════════════════
+
+  NMS International Group [no_trigger_found] — 2 queries
+    researched across the client trigger model; no dated commercial change found
+
+  Winbro Group Technologies [no_trigger_found] — 2 queries
+    researched across the client trigger model; no dated commercial change found
+
+  Slack & Parr [contradiction] — 2 queries
+    The only current signal is contraction: redundancy consultation for up to 40 roles driven by falling overseas demand and tariffs. Demand for freight is going down, not up.
+
+  Bleckmann [icp] — 0 queries
+    third-party logistics provider — a competitor; matches client disqualifier list (rejected before search — no research spent)
+
+  Aldi UK [icp] — 0 queries
+    enterprise retailer running its own distribution network; matches client disqualifier list (rejected before search — no research spent)
+
+  deVOL Kitchens [scoring]
+    scored 50, below reportable floor 60
+
+
+SOURCES USED
+══════════════════════════════════════════════════════════════════════════════
+   1 × gov.uk
+   1 × thegrowthhub.me
+   1 × themanufacturer.com
+   1 × knittingindustry.com
+   1 × ldc.co.uk
+   1 × grocerygazette.co.uk
+   1 × devolkitchens.co.uk
+   1 × kbbfocus.com
+
+
+UNUSED CAPTURES (queries captured but never requested)
+══════════════════════════════════════════════════════════════════════════════
+  none
+

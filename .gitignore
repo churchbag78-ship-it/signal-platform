@@ -4,3 +4,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# The product store is a local JSON file, not repository content.
+data/
+app/data/

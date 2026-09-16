@@ -2,6 +2,11 @@
 
 _Written against: `churchbag78-ship-it/signal-platform` @ `bdaf373`, 2026-09-08._
 
+> **Historical.** This is the Phase 0 snapshot, kept because the reasoning that
+> led to methodology-before-code is worth being able to re-read. It describes a
+> repository containing one file. Signal now has a working engine and product;
+> `README.md` is the current description.
+
 ## 1. What actually exists
 
 The repository contains one file: `README.md`. It states the intended

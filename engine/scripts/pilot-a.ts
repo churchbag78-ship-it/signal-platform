@@ -18,8 +18,6 @@ import { CorpusClaimExtractor, StaticSearchClient } from '../src/research/corpus
 import { WebResearchAdapter } from '../src/research/adapter.ts';
 import { runPipeline } from '../src/pipeline.ts';
 import { supportingFacts } from '../src/claims.ts';
-import { CostLedger } from '../src/providers/registry.ts';
-import { NullContactProvider, enrichContacts } from '../src/providers/contacts.ts';
 
 const RUN_DATE = '2026-09-08';
 /** Only genuinely promising rows are worth a salesperson's time. */
@@ -134,28 +132,3 @@ for (const drop of result.dropped) {
   console.log(`\n  ${drop.company.name} [${drop.stage}]`);
   console.log(`    ${drop.reason}`);
 }
-
-// Contact enrichment: attempted only for rows that earned it, and with no
-// provider configured it changes nothing about the report above.
-const ledger = new CostLedger();
-const enrichment = await enrichContacts(
-  result.opportunities.map((o) => ({
-    company: o.company,
-    role: o.decisionMakerRole,
-    score: o.score.total,
-  })),
-  new NullContactProvider(),
-  { minScore: 75, creditBudget: 0, approvedForSpend: false },
-  ledger,
-);
-
-console.log('\n\nCONTACT ENRICHMENT');
-line('═');
-console.log(`  provider: none configured · credits spent: ${ledger.totalCredits()}`);
-for (const outcome of enrichment) {
-  console.log(`  ${outcome.company.name}: ${outcome.result.status} — ${outcome.reason}`);
-}
-console.log(
-  '\n  Every opportunity above stands without contact data. The owning function\n' +
-    '  is identified by reasoning; the person is a later, optional layer.\n',
-);

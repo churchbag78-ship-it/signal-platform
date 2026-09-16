@@ -258,16 +258,6 @@ export interface DecisionMakerRole {
   rationale: string;
 }
 
-/** Result of optional, downstream person-level enrichment. */
-export type ContactStatus = 'found' | 'not_available' | 'not_attempted';
-
-export interface ContactResult {
-  status: ContactStatus;
-  name?: string;
-  title?: string;
-  source?: Source;
-}
-
 /**
  * Whether a change increases or decreases demand for THIS client's offer.
  *
@@ -288,7 +278,6 @@ export interface Candidate {
    */
   inferenceSteps: number;
   decisionMakerRole?: DecisionMakerRole;
-  contact?: ContactResult;
   /** The fact → inference → hypothesis chain behind this candidate. */
   claims?: Claim[];
   /**

@@ -187,7 +187,7 @@ export function createApp(options: AppOptions) {
           return send(
             response,
             200,
-            homePage(runsFor(data), options.models !== null, options.research != null),
+            homePage(runsFor(data), options.research != null),
           );
         }
 
@@ -254,7 +254,7 @@ export function createApp(options: AppOptions) {
           if (!website) {
             return send(response, 400, errorPage('No website', 'Signal needs a company website to start from.'));
           }
-          if (!options.research || !options.models) {
+          if (!options.research) {
             return send(
               response,
               503,

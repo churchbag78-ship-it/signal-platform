@@ -90,7 +90,7 @@ export function layout(title: string, body: string): string {
 <style>${CSS}</style>
 </head><body>
 <header class="bar"><div><strong><a href="/" style="color:inherit;text-decoration:none">Signal</a></strong>
-<span>evidence in, commercial assessment out</span></div></header>
+<span>finds reasons to sell</span></div></header>
 <main>${body}</main>
 </body></html>`;
 }
@@ -530,7 +530,7 @@ ${
 import type { RunProgress, RunRecord, RunStage, AcceptedOpportunity } from './run.ts';
 import type { StoredRun } from './store.ts';
 
-export function homePage(runs: StoredRun[], modelsReady: boolean, searchReady: boolean): string {
+export function homePage(runs: StoredRun[], researchReady: boolean): string {
   const history = runs.length
     ? `<table><thead><tr><th>Business</th><th>When</th><th>Found</th><th>Rejected</th></tr></thead><tbody>
 ${runs
@@ -551,9 +551,9 @@ ${runs
 </tbody></table>`
     : '<p class="empty">No searches yet.</p>';
 
-  const blockers: string[] = [];
-  if (!modelsReady) blockers.push('a model credential (SIGNAL_LLM_API_KEY)');
-  if (!searchReady) blockers.push('a search credential (SIGNAL_SEARCH_API_KEY)');
+  const blockers = researchReady
+    ? []
+    : ['a model credential (SIGNAL_LLM_API_KEY)', 'a search credential (SIGNAL_SEARCH_API_KEY)'];
 
   return layout(
     'Signal',
@@ -563,9 +563,9 @@ ${runs
 ${
   blockers.length > 0
     ? `<div class="panel"><div class="badbox"><strong>Research cannot run yet.</strong>
-<p>Signal needs ${escape(blockers.join(' and '))}. Without ${
-        blockers.length > 1 ? 'them' : 'it'
-      } the application runs and keeps your history, but it will refuse to research rather than guess.</p>
+<p>Signal needs ${escape(blockers.join(' and '))} — or <code>SIGNAL_CAPTURE</code> pointing at a
+recorded run. Without them the application runs and keeps your history, but it will refuse to
+research rather than guess.</p>
 <p>See the README for setup. The <a href="/diagnostic">diagnostic harness</a> still works for testing the reasoning layer on evidence you supply yourself.</p></div></div>`
     : ''
 }

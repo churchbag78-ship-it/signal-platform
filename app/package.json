@@ -1,0 +1,16 @@
+{
+  "name": "@signal/app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Signal — the product surface: evidence in, assessed call sheet out",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "../engine/node_modules/.bin/tsc --noEmit",
+    "verify": "node scripts/verify-end-to-end.ts"
+  }
+}

@@ -23,7 +23,31 @@ import type { ClientProfile } from '../../engine/src/pipeline.ts';
 import { LlmClaimExtractor, LLM_PRESETS } from '../../engine/src/research/llm-extractor.ts';
 import { Reasoner } from './reasoner.ts';
 import { analyse } from './analyse.ts';
-import { assessmentPage, clientPage, clientsPage, escape, layout, targetPage } from './views.ts';
+import {
+  assessmentPage,
+  clientPage,
+  clientsPage,
+  escape,
+  homePage,
+  layout,
+  opportunityPage,
+  progressPage,
+  runPage,
+  targetPage,
+} from './views.ts';
+import { runSignal, type RunProgress } from './run.ts';
+import {
+  AnthropicModelClient,
+  BridgeModelClient,
+  BridgePageRetriever,
+  BridgeSearchClient,
+  HttpSearchClient,
+  loadCapture,
+  SEARCH_PRESETS,
+  type ModelClient,
+} from './transport.ts';
+import { HttpPageRetriever, NullPageRetriever, type PageRetriever } from '../../engine/src/research/retrieval.ts';
+import type { SearchClient } from '../../engine/src/research/types.ts';
 import {
   addClient,
   addEvidence,
@@ -31,8 +55,11 @@ import {
   defaultStorePath,
   evidenceFor,
   FileStore,
+  newId,
   recordAssessment,
+  recordRun,
   removeEvidence,
+  runsFor,
   type Store,
 } from './store.ts';
 
@@ -104,12 +131,45 @@ export function modelsFromEnv(env: Record<string, string | undefined> = process.
   };
 }
 
+/**
+ * Everything the research pipeline needs from outside the process.
+ *
+ * `search` and `retriever` are null when no credential is configured. The
+ * application still runs and still keeps history; it refuses to research and
+ * says why, because a missing credential must never be presented as a finding
+ * about a company.
+ */
+export interface Research {
+  search: SearchClient;
+  retriever: PageRetriever;
+  model: ModelClient;
+  engine: { apiKey: string; model: string; endpoint?: string };
+}
+
 export interface AppOptions {
   store: Store;
   models: Models | null;
+  research?: Research | null;
   /** Overridable so a test can pin the run date. */
   runDate?: () => IsoDate;
 }
+
+/**
+ * In-flight runs, so the progress page can show what is happening now.
+ *
+ * Deliberately in memory: a run lasts minutes and belongs to the process doing
+ * it. The finished record goes to the store; the live log does not need to
+ * survive a restart, and persisting it would be infrastructure bought for
+ * nothing.
+ */
+interface LiveRun {
+  website: string;
+  log: RunProgress[];
+  finishedRunId?: string;
+  error?: string;
+}
+
+const liveRuns = new Map<string, LiveRun>();
 
 export function createApp(options: AppOptions) {
   const runDate = options.runDate ?? today;
@@ -123,7 +183,37 @@ export function createApp(options: AppOptions) {
       if (request.method === 'GET') {
         const data = await store.read();
 
-        if (path === '/') return send(response, 200, clientsPage(data));
+        if (path === '/') {
+          return send(
+            response,
+            200,
+            homePage(runsFor(data), options.models !== null, options.research != null),
+          );
+        }
+
+        if (path === '/diagnostic') return send(response, 200, clientsPage(data));
+
+        const runMatch = /^\/run\/([\w-]+)$/.exec(path);
+        if (runMatch) {
+          const id = runMatch[1]!;
+          const live = liveRuns.get(id);
+          if (live && !live.finishedRunId && !live.error) {
+            return send(response, 200, progressPage(id, live.website, live.log));
+          }
+          if (live?.error) {
+            return send(response, 500, errorPage('The run could not be completed', live.error));
+          }
+          const stored = data.runs.find((run) => run.id === (live?.finishedRunId ?? id));
+          if (!stored) return send(response, 404, errorPage('No such search', 'It may have been removed.'));
+          return send(response, 200, runPage(stored));
+        }
+
+        const opportunityMatch = /^\/run\/([\w-]+)\/opportunity\/(\d+)$/.exec(path);
+        if (opportunityMatch) {
+          const stored = data.runs.find((run) => run.id === opportunityMatch[1]);
+          if (!stored) return send(response, 404, errorPage('No such search', 'It may have been removed.'));
+          return send(response, 200, opportunityPage(stored, Number(opportunityMatch[2])));
+        }
 
         const clientMatch = /^\/client\/([\w-]+)$/.exec(path);
         if (clientMatch) {
@@ -158,6 +248,53 @@ export function createApp(options: AppOptions) {
 
       if (request.method === 'POST') {
         const form = await readBody(request);
+
+        if (path === '/runs') {
+          const website = (form.get('website') ?? '').trim();
+          if (!website) {
+            return send(response, 400, errorPage('No website', 'Signal needs a company website to start from.'));
+          }
+          if (!options.research || !options.models) {
+            return send(
+              response,
+              503,
+              errorPage(
+                'Research is not configured',
+                'Signal needs a model credential and a search credential to research. Neither the ' +
+                  'application nor this message says anything about any company — no research has been done.',
+              ),
+            );
+          }
+
+          // The run outlives the request. The browser gets a progress page
+          // immediately and polls it; nothing is faked while it waits.
+          const id = newId('live');
+          const live: LiveRun = { website, log: [] };
+          liveRuns.set(id, live);
+
+          const research = options.research;
+          void (async () => {
+            try {
+              const record = await runSignal({
+                website,
+                runDate: runDate(),
+                search: research.search,
+                retriever: research.retriever,
+                model: research.model,
+                engine: research.engine,
+                queryBudget: Number(form.get('budget') ?? 12) || 12,
+                ...(form.get('constraints')?.trim() ? { constraints: form.get('constraints')!.trim() } : {}),
+                onProgress: (progress) => live.log.push(progress),
+              });
+              const stored = await recordRun(store, website, record.runDate, record);
+              live.finishedRunId = stored.id;
+            } catch (error) {
+              live.error = error instanceof Error ? error.message : String(error);
+            }
+          })();
+
+          return redirect(response, `/run/${id}`);
+        }
 
         if (path === '/clients') {
           const profile: ClientProfile = {
@@ -294,19 +431,76 @@ export function startServer(port: number, options: AppOptions) {
   return server;
 }
 
+/**
+ * Wire up research from the environment.
+ *
+ * One search provider, one page fetcher, one model. Not a provider zoo: five
+ * theoretical providers are a way of avoiding the question of which one works.
+ *
+ * Three ways this resolves, and the product says which one it is on:
+ *
+ *   LIVE      SIGNAL_LLM_API_KEY + SIGNAL_SEARCH_API_KEY are set. Real search,
+ *             real page fetching, real model calls.
+ *   BRIDGE    SIGNAL_CAPTURE points at a capture file. Searches, pages and
+ *             model responses recorded elsewhere are replayed. Used where the
+ *             process itself has no egress; an uncaptured query is an error,
+ *             never an empty result.
+ *   NONE      Neither. The app runs, keeps history and refuses to research.
+ */
+export function researchFromEnv(env: Record<string, string | undefined> = process.env): Research | null {
+  const capturePath = env.SIGNAL_CAPTURE;
+  const apiKey = env.SIGNAL_LLM_API_KEY ?? env.ANTHROPIC_API_KEY;
+  const model = env.SIGNAL_LLM_MODEL ?? 'claude-opus-5';
+
+  if (capturePath) {
+    const capture = loadCapture(capturePath);
+    return {
+      search: new BridgeSearchClient(capture),
+      retriever: new BridgePageRetriever(capture),
+      model: new BridgeModelClient(capture),
+      // The engine-side calls go through the same bridge when replaying.
+      engine: { apiKey: apiKey ?? 'bridge', model, ...(env.SIGNAL_LLM_ENDPOINT ? { endpoint: env.SIGNAL_LLM_ENDPOINT } : {}) },
+    };
+  }
+
+  const searchKey = env.SIGNAL_SEARCH_API_KEY;
+  const preset = SEARCH_PRESETS[env.SIGNAL_SEARCH_PROVIDER ?? 'brave'];
+  if (!apiKey || !searchKey || !preset) return null;
+
+  return {
+    search: new HttpSearchClient({ ...preset, apiKey: searchKey }),
+    retriever: new HttpPageRetriever({ userAgent: 'SignalResearchBot/0.2' }),
+    model: new AnthropicModelClient({
+      apiKey,
+      model,
+      ...(env.SIGNAL_LLM_ENDPOINT ? { endpoint: env.SIGNAL_LLM_ENDPOINT } : {}),
+    }),
+    engine: { apiKey, model, ...(env.SIGNAL_LLM_ENDPOINT ? { endpoint: env.SIGNAL_LLM_ENDPOINT } : {}) },
+  };
+}
+
 if (import.meta.filename === process.argv[1]) {
   const port = Number(process.env.PORT ?? 3000);
   const storePath = defaultStorePath();
   const models = modelsFromEnv();
+  const research = researchFromEnv();
 
-  startServer(port, { store: new FileStore(storePath), models });
+  startServer(port, { store: new FileStore(storePath), models, research });
 
   console.log(`Signal listening on http://localhost:${port}`);
   console.log(`Store: ${storePath}`);
-  if (!models) {
+
+  if (research) {
     console.log(
-      'No model credential found (SIGNAL_LLM_API_KEY or ANTHROPIC_API_KEY).\n' +
-        'Clients, companies and evidence can be recorded; assessment will refuse rather than guess.',
+      process.env.SIGNAL_CAPTURE
+        ? `Research: BRIDGE — replaying ${process.env.SIGNAL_CAPTURE}. No live search or fetching.`
+        : `Research: LIVE — ${research.search.id} search, ${research.model.id}.`,
+    );
+  } else {
+    console.log(
+      'Research: NOT CONFIGURED. Signal needs SIGNAL_LLM_API_KEY and SIGNAL_SEARCH_API_KEY\n' +
+        '  (or SIGNAL_CAPTURE for a replayed run). It will refuse to research rather than guess.\n' +
+        '  History and the manual diagnostic harness at /diagnostic still work.',
     );
   }
 }

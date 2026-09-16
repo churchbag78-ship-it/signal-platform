@@ -1,0 +1,277 @@
+{
+ "capturedAt": "2026-09-16",
+ "transport": "agent WebSearch (REAL - every search result in this file was really returned). Page bodies: NOT captured. Every domain is refused by this environment's egress proxy with HTTP 403, so no article or website body exists here. The client site corpus below is a written stand-in, clearly marked, because no website could be fetched.",
+ "searches": [
+  {
+   "query": "insidermedia \"signs lease\" OR \"takes space\" office Birmingham Nottingham 2026 relocate headquarters sq ft",
+   "results": [
+    {
+     "title": "International law firm strikes deal to relocate Birmingham office",
+     "url": "https://www.insidermedia.com/news/midlands/international-law-firm-strikes-deal-to-relocate-birmingham-office",
+     "snippet": "Trowers & Hamlins signed a ten-year lease at One Snow Hill for 17,000 sq ft located on floor 3, moving from 10 Colmore Row where it had been for more than 13 years.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Lodders signs deal to relocate Birmingham office",
+     "url": "https://www.insidermedia.com/news/all/lodders-signs-deal-to-relocate-birmingham-office",
+     "snippet": "Lodders took 6,500 sq ft of space at 1 Newhall Street in the heart of Birmingham's business district with an expected move in September following fit-out works over the summer.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Professional services brands including Shakespeare Martineau relocate Nottingham office in strategic investment",
+     "url": "https://www.insidermedia.com/news/midlands/professional-services-brands-relocate-nottingham-office-in-strategic-investment",
+     "snippet": "A new 8,680 sq ft office - up from 7,180 sq ft - was created to support agile working for more than 110 people at Shakespeare Martineau's Nottingham office.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Goldman Sachs confirms landmark Birmingham office deal",
+     "url": "https://www.insidermedia.com/news/midlands/goldman-sachs-confirms-landmark-birmingham-office-deal",
+     "snippet": "Goldman Sachs confirmed a long-term lease agreement for a 110,000 sq ft permanent office space in Birmingham.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "FTSE 250 IT company takes entire floor at Birmingham office building",
+     "url": "https://www.insidermedia.com/news/midlands/ftse-250-it-company-takes-entire-floor-at-listed-birmingham-office-building",
+     "snippet": "Softcat signed a ten-year lease on the whole of the seventh floor of the Billiards Building, totalling 9,000 sq ft.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Phoenix Group offloads 400k sq ft headquarters campus and moves to Birmingham",
+     "url": "https://www.insidermedia.com/news/midlands/phoenix-group-offloads-400k-sq-ft-headquarters-campus-and-moves-to-birmingham",
+     "snippet": "Phoenix Group relocated to 10 Brindleyplace, Birmingham, where it took up 25,107 sq ft on the sixth floor of the building.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Construction sector supplier MIDFIX relocates to 100k sq ft facility at Power Park",
+     "url": "https://www.insidermedia.com/news/midlands/construction-sector-supplier-relocates-to-100k-sq-ft-facility-at-power-park",
+     "snippet": "Construction sector supplier MIDFIX relocates to 100k sq ft facility at Power Park.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "New owner sought for 140k sq ft Birmingham office building - previously home to HSBC",
+     "url": "https://www.insidermedia.com/news/midlands/new-owner-sought-for-140k-sq-ft-birmingham-office-building-previously-home-to-hsbc",
+     "snippet": "New owner sought for 140k sq ft Birmingham office building, previously home to HSBC.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "\u201cDisapointing start\u201d for Birmingham\u2019s office market but could still be \u201cstory of two halves\u201d",
+     "url": "https://www.insidermedia.com/news/midlands/disapointing-start-for-birminghams-office-market-but-could-still-be-story-of-two-halves",
+     "snippet": "Commentary on take-up across the Birmingham office market in the first half of the year.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "insidermedia relocates 100k sq ft industrial facility Midlands 2026",
+   "results": []
+  },
+  {
+   "query": "Trowers & Hamlins Birmingham official website",
+   "results": [
+    {
+     "title": "Trowers & Hamlins - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Trowers_&_Hamlins",
+     "snippet": "International law firm.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "TROWERS & HAMLINS LLP overview - GOV.UK",
+     "url": "https://find-and-update.company-information.service.gov.uk/company/OC337852",
+     "snippet": "Companies House record.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Home | Trowers & Hamlins law firm",
+     "url": "https://www.trowers.com/",
+     "snippet": "Trowers & Hamlins is an international law firm with over 170 partners and more than 1000 people across the UK, Middle East and Asia.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "About us | Trowers & Hamlins law firm",
+     "url": "https://www.trowers.com/about-us",
+     "snippet": "About Trowers & Hamlins.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "Lodders Birmingham official website",
+   "results": [
+    {
+     "title": "Lodders Solicitors - ZoomInfo",
+     "url": "https://www.zoominfo.com/c/lodders-solicitors-llp/22937972",
+     "snippet": "Directory listing.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Lodders Solicitors LLP | LinkedIn",
+     "url": "https://uk.linkedin.com/company/lodders-solicitors-llp",
+     "snippet": "LinkedIn page.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Birmingham Solicitors - Lodders Solicitors",
+     "url": "https://www.lodders.co.uk/contact-us/birmingham-lodders-solicitors/",
+     "snippet": "Their Birmingham office is on the 3rd floor of 1 Newhall Street.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Lodders Solicitors | Warwickshire, Birmingham and the South West",
+     "url": "https://www.lodders.co.uk/",
+     "snippet": "Lodders Solicitors is a legal firm based in Warwickshire, Birmingham and the South West.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "MIDFIX Nottingham official website",
+   "results": [
+    {
+     "title": "MIDFIX | LinkedIn",
+     "url": "https://www.linkedin.com/company/midfix",
+     "snippet": "LinkedIn page.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "MIDFIX LIMITED overview - GOV.UK",
+     "url": "https://find-and-update.company-information.service.gov.uk/company/05152623",
+     "snippet": "Companies House record.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "MIDFIX",
+     "url": "https://www.midfix.co.uk",
+     "snippet": "MIDFIX are experts in onsite and offsite supports for the mechanical and electrical industries, delivered through design, engineering, fabrication and industry training. Headquartered in Nottingham.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "Shakespeare Martineau Nottingham official website",
+   "results": [
+    {
+     "title": "Leading Law Firm | Shakespeare Martineau",
+     "url": "https://www.shma.co.uk/",
+     "snippet": "Shakespeare Martineau is a top 50 UK law firm with offices across the UK including Nottingham.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Shakespeare Martineau | LinkedIn",
+     "url": "https://uk.linkedin.com/company/shakespeare-martineau",
+     "snippet": "LinkedIn page.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Who We Are | Shakespeare Martineau",
+     "url": "https://www.shma.co.uk/who-we-are/",
+     "snippet": "More than 1,000 staff across 11 offices.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "Softcat Birmingham official website",
+   "results": [
+    {
+     "title": "Softcat - ZoomInfo",
+     "url": "https://www.zoominfo.com/c/softcat-plc/35504633",
+     "snippet": "Directory listing.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Our People | Softcat",
+     "url": "https://www.softcat.com/about-us/people",
+     "snippet": "Softcat is a leading IT infrastructure provider to corporate and public sector organisations, headquartered in Marlow.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Company Overview for SOFTCAT PLC (02174990)",
+     "url": "https://find-and-update.company-information.service.gov.uk/company/02174990",
+     "snippet": "Companies House record.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "Phoenix Group Birmingham official website",
+   "results": [
+    {
+     "title": "Phoenix Group - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Phoenix_Group",
+     "snippet": "FTSE 100 life assurance consolidator.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Phoenix Group Holdings - AnnualReports.com",
+     "url": "https://www.annualreports.com/Company/Phoenix-Group-Holdings",
+     "snippet": "Annual reports.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Phoenix Insurance Group",
+     "url": "https://www.phoenixinsgrp.com/",
+     "snippet": "A US insurance agency, unrelated.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  },
+  {
+   "query": "Goldman Sachs Birmingham official website",
+   "results": [
+    {
+     "title": "Goldman Sachs - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Goldman_Sachs",
+     "snippet": "Global investment bank founded 1869.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Home | Goldman Sachs",
+     "url": "https://www.goldmansachs.com/",
+     "snippet": "Leading global investment banking, securities and investment management firm.",
+     "retrievedAt": "2026-09-16"
+    },
+    {
+     "title": "Goldman Sachs | LinkedIn",
+     "url": "https://www.linkedin.com/company/goldman-sachs",
+     "snippet": "LinkedIn page.",
+     "retrievedAt": "2026-09-16"
+    }
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "url": "https://meridianworkspace.co.uk",
+   "text": "Meridian Workspace is a commercial fit-out contractor based in Birmingham. We design and build office interiors, industrial and warehouse fit-out, and we handle cat A to cat B fit-out for landlords and occupiers across the Midlands. Our services: office fit-out and refurbishment; industrial and warehouse fit-out; space planning and design; mechanical and electrical installation; furniture supply and installation; post-occupancy support. We work with professional services firms, technology companies, manufacturers and logistics operators taking new space or reconfiguring existing premises. Typical projects run from 3,000 to 60,000 sq ft. We do not undertake residential work, new-build shell and core construction, or projects outside the Midlands and surrounding counties. We are not a furniture reseller and do not take on fit-outs below about 2,000 sq ft.",
+   "retrievedAt": "2026-09-16"
+  },
+  {
+   "url": "https://meridianworkspace.co.uk/services",
+   "text": "Meridian Workspace is a commercial fit-out contractor based in Birmingham. We design and build office interiors, industrial and warehouse fit-out, and we handle cat A to cat B fit-out for landlords and occupiers across the Midlands. Our services: office fit-out and refurbishment; industrial and warehouse fit-out; space planning and design; mechanical and electrical installation; furniture supply and installation; post-occupancy support. We work with professional services firms, technology companies, manufacturers and logistics operators taking new space or reconfiguring existing premises. Typical projects run from 3,000 to 60,000 sq ft. We do not undertake residential work, new-build shell and core construction, or projects outside the Midlands and surrounding counties. We are not a furniture reseller and do not take on fit-outs below about 2,000 sq ft.",
+   "retrievedAt": "2026-09-16"
+  },
+  {
+   "url": "https://meridianworkspace.co.uk/about",
+   "text": "Meridian Workspace is a commercial fit-out contractor based in Birmingham. We design and build office interiors, industrial and warehouse fit-out, and we handle cat A to cat B fit-out for landlords and occupiers across the Midlands. Our services: office fit-out and refurbishment; industrial and warehouse fit-out; space planning and design; mechanical and electrical installation; furniture supply and installation; post-occupancy support. We work with professional services firms, technology companies, manufacturers and logistics operators taking new space or reconfiguring existing premises. Typical projects run from 3,000 to 60,000 sq ft. We do not undertake residential work, new-build shell and core construction, or projects outside the Midlands and surrounding counties. We are not a furniture reseller and do not take on fit-outs below about 2,000 sq ft.",
+   "retrievedAt": "2026-09-16"
+  }
+ ],
+ "model": [
+  {
+   "purpose": "commercial-model",
+   "response": "{\"name\": \"Meridian Workspace\", \"summary\": \"A Birmingham commercial fit-out contractor that designs and builds office and industrial interiors for occupiers and landlords across the Midlands.\", \"offerings\": [{\"name\": \"office fit-out and refurbishment\", \"description\": \"design and build of office interiors, cat A to cat B\", \"sourceUrl\": \"https://meridianworkspace.co.uk/services\"}, {\"name\": \"industrial and warehouse fit-out\", \"description\": \"fit-out of industrial and warehouse space\", \"sourceUrl\": \"https://meridianworkspace.co.uk/services\"}, {\"name\": \"space planning and design\", \"description\": \"space planning and interior design ahead of a move\", \"sourceUrl\": \"https://meridianworkspace.co.uk/services\"}, {\"name\": \"mechanical and electrical installation\", \"description\": \"M&E installation within fit-out projects\", \"sourceUrl\": \"https://meridianworkspace.co.uk/services\"}, {\"name\": \"furniture supply and installation\", \"description\": \"supply and install of office furniture\", \"sourceUrl\": \"https://meridianworkspace.co.uk/services\"}], \"customerTypes\": [\"professional services firms\", \"technology companies\", \"manufacturers\", \"logistics operators\", \"landlords\"], \"industriesServed\": [\"professional services\", \"technology\", \"manufacturing\", \"logistics\", \"commercial property\"], \"problemsSolved\": [\"new space is unusable until it is fitted out\", \"a growing headcount no longer fits the current layout\", \"a landlord needs cat A space made lettable\"], \"buyingSituations\": [{\"situation\": \"an occupier signs a lease on new space that is shell or cat A\", \"offering\": \"office fit-out and refurbishment\", \"why\": \"the space cannot be occupied until it is fitted out\"}, {\"situation\": \"a company relocates to a larger unit\", \"offering\": \"industrial and warehouse fit-out\", \"why\": \"the new unit needs racking, offices and M&E before operations move\"}], \"geography\": \"Birmingham and the Midlands and surrounding counties\", \"scale\": \"projects from 3,000 to 60,000 sq ft\", \"cannotServe\": [\"residential work\", \"new-build shell and core construction\", \"projects outside the Midlands\", \"fit-outs below about 2,000 sq ft\"], \"uncertainties\": [\"company size and turnover are not stated on the site\", \"no named clients are listed\"]}"
+  },
+  {
+   "purpose": "demand-triggers",
+   "response": "{\"triggers\": [{\"id\": \"t1\", \"event\": \"An occupier signs a lease on new office space that is delivered shell or cat A\", \"mechanism\": \"Leased space in that condition cannot be occupied until it is fitted out, and the tenant has a fixed move date and a rent-free period to work inside, so a fit-out contractor is appointed within weeks of the lease completing.\", \"offering\": \"office fit-out and refurbishment\", \"strength\": \"strong\", \"observableTraces\": [\"commercial property pages of regional business press\", \"agent letting announcements\", \"landlord press releases\"], \"queries\": [\"insidermedia \\\"signs lease\\\" OR \\\"takes space\\\" office Birmingham Nottingham 2026 relocate headquarters sq ft\"], \"exclusions\": [\"the letting is of fully fitted space\", \"the tenant is a landlord doing its own cat A\", \"space is under 2,000 sq ft\", \"outside the Midlands\"], \"falsifyingQuestion\": \"Is the space being taken shell, cat A or fully fitted, and who is doing the fit-out?\"}, {\"id\": \"t2\", \"event\": \"A company relocates its operations to a substantially larger industrial or warehouse unit\", \"mechanism\": \"A larger unit is taken empty and needs offices, welfare, racking and M&E installed before operations can transfer, which is an industrial fit-out package let separately from the building.\", \"offering\": \"industrial and warehouse fit-out\", \"strength\": \"strong\", \"observableTraces\": [\"regional business press property coverage\", \"industrial agency announcements\"], \"queries\": [\"insidermedia relocates 100k sq ft industrial facility Midlands 2026\"], \"exclusions\": [\"the unit is taken fully fitted\", \"the occupier is a developer\"], \"falsifyingQuestion\": \"What state is the new unit in, and has the internal fit-out been let yet?\"}], \"rejected\": [{\"event\": \"Company raises funding\", \"why\": \"Funding is not a need. It says nothing about whether the company is taking space, and a funded company with no property event has no fit-out requirement.\"}, {\"event\": \"Company is hiring\", \"why\": \"Hiring is a standing condition, not an event, and headcount growth only matters to us once it forces a property decision - which is the trigger we would actually search for.\"}, {\"event\": \"Company appoints a new CEO\", \"why\": \"There is no mechanism from a leadership change to a fit-out requirement that would not apply equally to any supplier.\"}]}"
+  },
+  {
+   "purpose": "candidate-extraction",
+   "response": "{\"candidates\": [{\"companyName\": \"Trowers & Hamlins\", \"domain\": \"\", \"whatHappened\": \"Signed a ten-year lease at One Snow Hill for 17,000 sq ft on floor 3, moving from 10 Colmore Row after more than 13 years\", \"whenText\": \"2026\", \"location\": \"Birmingham\", \"industryHint\": \"international law firm\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/international-law-firm-strikes-deal-to-relocate-birmingham-office\"], \"role\": \"subject\", \"confidence\": 0.9}, {\"companyName\": \"Lodders\", \"domain\": \"\", \"whatHappened\": \"Took 6,500 sq ft at 1 Newhall Street, Birmingham, with a move expected in September following fit-out works over the summer\", \"whenText\": \"2026\", \"location\": \"Birmingham\", \"industryHint\": \"law firm\", \"sourceUrls\": [\"https://www.insidermedia.com/news/all/lodders-signs-deal-to-relocate-birmingham-office\"], \"role\": \"subject\", \"confidence\": 0.9}, {\"companyName\": \"Shakespeare Martineau\", \"domain\": \"\", \"whatHappened\": \"Created a new 8,680 sq ft Nottingham office, up from 7,180 sq ft, to support agile working for more than 110 people\", \"whenText\": \"2026\", \"location\": \"Nottingham\", \"industryHint\": \"professional services\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/professional-services-brands-relocate-nottingham-office-in-strategic-investment\"], \"role\": \"subject\", \"confidence\": 0.85}, {\"companyName\": \"Softcat\", \"domain\": \"\", \"whatHappened\": \"Signed a ten-year lease on the whole seventh floor of the Billiards Building, 9,000 sq ft\", \"whenText\": \"2026\", \"location\": \"Birmingham\", \"industryHint\": \"FTSE 250 IT reseller\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/ftse-250-it-company-takes-entire-floor-at-listed-birmingham-office-building\"], \"role\": \"subject\", \"confidence\": 0.85}, {\"companyName\": \"Goldman Sachs\", \"domain\": \"\", \"whatHappened\": \"Confirmed a long-term lease for 110,000 sq ft of permanent office space in Birmingham\", \"whenText\": \"2026\", \"location\": \"Birmingham\", \"industryHint\": \"investment bank\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/goldman-sachs-confirms-landmark-birmingham-office-deal\"], \"role\": \"subject\", \"confidence\": 0.9}, {\"companyName\": \"Phoenix Group\", \"domain\": \"\", \"whatHappened\": \"Relocated to 10 Brindleyplace, Birmingham, taking 25,107 sq ft on the sixth floor, and offloaded a 400k sq ft headquarters campus\", \"whenText\": \"2026\", \"location\": \"Birmingham\", \"industryHint\": \"insurance and long-term savings\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/phoenix-group-offloads-400k-sq-ft-headquarters-campus-and-moves-to-birmingham\"], \"role\": \"subject\", \"confidence\": 0.9}, {\"companyName\": \"MIDFIX\", \"domain\": \"\", \"whatHappened\": \"Relocated to a 100k sq ft facility at Power Park\", \"whenText\": \"2026\", \"location\": \"Nottingham\", \"industryHint\": \"construction sector supplier\", \"sourceUrls\": [\"https://www.insidermedia.com/news/midlands/construction-sector-supplier-relocates-to-100k-sq-ft-facility-at-power-park\"], \"role\": \"subject\", \"confidence\": 0.8}], \"ignored\": [{\"url\": \"https://www.insidermedia.com/news/midlands/new-owner-sought-for-140k-sq-ft-birmingham-office-building-previously-home-to-hsbc\", \"why\": \"A building being sold is not an event at an occupier; HSBC is the former tenant, not the subject of a new requirement\"}, {\"url\": \"https://www.insidermedia.com/news/midlands/disapointing-start-for-birminghams-office-market-but-could-still-be-story-of-two-halves\", \"why\": \"Market commentary about take-up, not an event at a named company\"}]}"
+  },
+  {
+   "purpose": "candidate-extraction",
+   "response": "{\"candidates\": [], \"ignored\": []}"
+  }
+ ]
+}

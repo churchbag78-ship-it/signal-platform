@@ -515,3 +515,356 @@ ${
     : ''
 }`;
 }
+
+// ===========================================================================
+// The product journey: website in, opportunities out.
+//
+// The manual pages above are the diagnostic harness. Everything below is what
+// a salesperson actually uses, and it answers five questions in this order,
+// because that is the order a person asks them:
+//
+//   WHAT HAPPENED?  WHY DOES IT MATTER?  WHY TO THIS BUSINESS?
+//   WHAT IS THE EVIDENCE?  WHAT DO I DO WITH IT?
+// ===========================================================================
+
+import type { RunProgress, RunRecord, RunStage, AcceptedOpportunity } from './run.ts';
+import type { StoredRun } from './store.ts';
+
+export function homePage(runs: StoredRun[], modelsReady: boolean, searchReady: boolean): string {
+  const history = runs.length
+    ? `<table><thead><tr><th>Business</th><th>When</th><th>Found</th><th>Rejected</th></tr></thead><tbody>
+${runs
+  .slice(0, 15)
+  .map(
+    (run) => `<tr>
+  <td><a href="/run/${escape(run.id)}">${escape(run.website)}</a></td>
+  <td class="tag">${escape(run.runDate)}</td>
+  <td>${
+    run.record.opportunities.length > 0
+      ? `<span class="tag good">${escape(run.record.opportunities.length)}</span>`
+      : '<span class="tag">none</span>'
+  }</td>
+  <td><span class="tag">${escape(run.record.rejected.length)}</span></td>
+</tr>`,
+  )
+  .join('')}
+</tbody></table>`
+    : '<p class="empty">No searches yet.</p>';
+
+  const blockers: string[] = [];
+  if (!modelsReady) blockers.push('a model credential (SIGNAL_LLM_API_KEY)');
+  if (!searchReady) blockers.push('a search credential (SIGNAL_SEARCH_API_KEY)');
+
+  return layout(
+    'Signal',
+    `<h1>Signal finds reasons to sell</h1>
+<p class="lede">Give Signal a company's website. It works out what they sell and who buys it, what has to happen at another company to create demand for them, then goes looking for companies that has just happened to — and throws away everything it cannot stand up.</p>
+
+${
+  blockers.length > 0
+    ? `<div class="panel"><div class="badbox"><strong>Research cannot run yet.</strong>
+<p>Signal needs ${escape(blockers.join(' and '))}. Without ${
+        blockers.length > 1 ? 'them' : 'it'
+      } the application runs and keeps your history, but it will refuse to research rather than guess.</p>
+<p>See the README for setup. The <a href="/diagnostic">diagnostic harness</a> still works for testing the reasoning layer on evidence you supply yourself.</p></div></div>`
+    : ''
+}
+
+<div class="panel">
+<h2>New search</h2>
+<form method="post" action="/runs">
+  <label for="website">Company website</label>
+  <input type="text" id="website" name="website" placeholder="example.co.uk" required${blockers.length ? ' disabled' : ''}>
+  <label for="constraints">Constraints (optional) — geography, company size, anything to exclude</label>
+  <input type="text" id="constraints" name="constraints" placeholder="UK only, manufacturers over 50 staff"${blockers.length ? ' disabled' : ''}>
+  <label for="budget">Searches to run</label>
+  <select id="budget" name="budget"${blockers.length ? ' disabled' : ''}>
+    <option value="8">8 — quick look</option>
+    <option value="12" selected>12 — standard</option>
+    <option value="20">20 — thorough</option>
+  </select>
+  <button type="submit"${blockers.length ? ' disabled' : ''}>Find opportunities</button>
+</form>
+</div>
+
+<div class="panel">
+<h2>History</h2>
+${history}
+</div>
+
+<p class="lede" style="margin-top:28px;font-size:13px">
+Signal returns few results on purpose. A company matching your customer profile is not an opportunity;
+a change that creates a need for something you actually sell is. Everything else is rejected, and
+<a href="/diagnostic">the rejections are shown</a> so you can see it filtering rather than padding.</p>`,
+  );
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  reading_website: 'Reading the website',
+  understanding_business: 'Understanding the business',
+  deriving_triggers: 'Working out what creates demand',
+  searching: 'Searching public information',
+  finding_companies: 'Finding companies',
+  resolving_identity: 'Identifying the companies',
+  gathering_evidence: 'Gathering evidence',
+  assessing: 'Verifying and assessing',
+  done: 'Done',
+  failed: 'Stopped',
+};
+
+const STAGE_ORDER: RunStage[] = [
+  'reading_website',
+  'understanding_business',
+  'deriving_triggers',
+  'searching',
+  'finding_companies',
+  'resolving_identity',
+  'gathering_evidence',
+  'assessing',
+];
+
+/** Live progress. Every line is something that actually happened. */
+export function progressPage(id: string, website: string, log: RunProgress[]): string {
+  const current = log.at(-1);
+  const reached = new Set(log.map((entry) => entry.stage));
+
+  const steps = STAGE_ORDER.map((stage) => {
+    const done = reached.has(stage) && current?.stage !== stage;
+    const active = current?.stage === stage;
+    return `<li class="row" style="border:0;padding:4px 0">
+      <span>${active ? '<strong>' : ''}${escape(STAGE_LABELS[stage] ?? stage)}${active ? '</strong>' : ''}</span>
+      <span class="tag ${done ? 'good' : active ? 'warn' : ''}">${done ? 'done' : active ? 'running' : 'waiting'}</span>
+    </li>`;
+  }).join('');
+
+  const recent = log
+    .slice(-12)
+    .map(
+      (entry) =>
+        `<li class="src" style="border:0;padding:2px 0"><code>${escape(entry.stage)}</code> ${escape(entry.message)}${
+          entry.total ? ` <span class="tag">${escape(entry.done ?? 0)}/${escape(entry.total)}</span>` : ''
+        }</li>`,
+    )
+    .join('');
+
+  return layout(
+    website,
+    `<meta http-equiv="refresh" content="3">
+<h1>${escape(website)}</h1>
+<p class="lede">Researching. This page refreshes itself.</p>
+<div class="panel"><ul class="list">${steps}</ul></div>
+<div class="panel"><h3>What it is doing</h3><ul class="list">${recent}</ul></div>
+<p class="lede"><a href="/run/${escape(id)}">Refresh now</a> · <a href="/">Back</a></p>`,
+  );
+}
+
+function opportunityCard(run: StoredRun, opportunity: AcceptedOpportunity, index: number): string {
+  const assessment = opportunity.assessment;
+  if (assessment.status !== 'opportunity') return '';
+  const axes = assessment.opportunity.axes;
+
+  return `<li>
+  <div class="row">
+    <strong><a href="/run/${escape(run.id)}/opportunity/${escape(index)}">${escape(assessment.company.name)}</a></strong>
+    ${axes ? `<span class="tag ${axes.quadrant === 'ACT_NOW' ? 'good' : 'warn'}">${escape(axes.quadrant)}</span>` : ''}
+  </div>
+  <p style="margin:6px 0">${escape(assessment.signal.whatChanged)}</p>
+  <p class="src">
+    <strong>Why it matters to you:</strong> ${escape(opportunity.trigger.mechanism)}
+    → <span class="tag">${escape(opportunity.trigger.offering)}</span>
+  </p>
+  <p class="src">
+    ${assessment.signal.eventDate ? `<span class="tag">${escape(assessment.signal.eventDate)}</span>` : '<span class="tag warn">undated</span>'}
+    ${axes ? `<span class="tag">evidence ${escape(axes.evidence.score)}</span><span class="tag">value ${escape(axes.value.score)}</span>` : ''}
+    <span class="tag">${escape(assessment.signal.facts.length)} verified fact(s)</span>
+  </p>
+</li>`;
+}
+
+export function runPage(run: StoredRun): string {
+  const record = run.record;
+
+  if (record.failure) {
+    return layout(
+      run.website,
+      `<h1>${escape(run.website)}</h1>
+<div class="panel"><div class="badbox">
+<strong>The run stopped at: ${escape(STAGE_LABELS[record.failure.stage] ?? record.failure.stage)}</strong>
+<p>${escape(record.failure.reason)}</p>
+<p>Nothing has been established about any company. This is a failure of the research, not a finding.</p>
+</div></div>
+${runDetail(record)}
+<p class="lede"><a href="/">Back</a></p>`,
+    );
+  }
+
+  const opportunities = record.opportunities.length
+    ? `<ul class="list">${record.opportunities
+        .map((opportunity, index) => opportunityCard(run, opportunity, index))
+        .join('')}</ul>`
+    : `<div class="warnbox"><strong>No opportunity survived.</strong>
+<p>Signal found ${escape(record.candidatesFound)} candidate companies and could not stand any of them up as a credible reason to sell. The rejections below say why, one by one.</p>
+<p>That is a real answer. Returning a weak lead here would be worse than returning none.</p></div>`;
+
+  return layout(
+    run.website,
+    `<h1>${escape(run.website)}</h1>
+<p class="lede">Researched ${escape(run.runDate)} · ${escape(record.searches.filter((s) => !s.error).length)} searches ·
+${escape(record.candidatesFound)} companies found · <strong>${escape(record.opportunities.length)} opportunities</strong></p>
+
+<div class="panel">
+<h2>Opportunities</h2>
+${opportunities}
+</div>
+
+${rejectedPanel(record)}
+${runDetail(record)}
+<p class="lede"><a href="/">Back</a></p>`,
+  );
+}
+
+function rejectedPanel(record: RunRecord): string {
+  const rows = [
+    ...record.rejected.map((rejection) => ({
+      name: rejection.companyName,
+      stage: rejection.stage,
+      reason: rejection.reason,
+    })),
+    ...record.unresolved.map((entry) => ({
+      name: entry.companyName,
+      stage: entry.status,
+      reason: entry.explanation,
+    })),
+  ];
+
+  if (rows.length === 0) return '';
+
+  return `<div class="panel">
+<h2>Rejected — ${escape(rows.length)}</h2>
+<p class="lede">Shown so you can see Signal filtering rather than padding. Each of these was found and then refused, for the stated reason.</p>
+<div class="scroller"><table><thead><tr><th>Company</th><th>Refused at</th><th>Why</th></tr></thead><tbody>
+${rows
+  .map(
+    (row) =>
+      `<tr><td>${escape(row.name)}</td><td><span class="tag">${escape(row.stage)}</span></td><td>${escape(row.reason)}</td></tr>`,
+  )
+  .join('')}
+</tbody></table></div></div>`;
+}
+
+function runDetail(record: RunRecord): string {
+  const model = record.model;
+  const triggers = record.triggers;
+
+  const modelPanel = model
+    ? `<div class="panel">
+<h2>What Signal understood about the business</h2>
+<p>${escape(model.summary)}</p>
+<dl class="kv">
+  <dt>Sells</dt><dd>${model.offerings.map((o) => `<span class="tag">${escape(o.name)}</span>`).join(' ')}</dd>
+  <dt>Customers</dt><dd>${escape(model.customerTypes.join('; ')) || '<span class="empty">not established</span>'}</dd>
+  <dt>Geography</dt><dd>${escape(model.geography)}</dd>
+  <dt>Cannot serve</dt><dd>${escape(model.cannotServe.join('; ')) || '<span class="tag warn">not established</span>'}</dd>
+  <dt>Read from</dt><dd>${escape(model.evidence.pagesRead.length)} pages (${escape(model.evidence.quality.level)})</dd>
+  <dt>Unsupported by the site</dt><dd>${
+    model.grounding.findings.length === 0
+      ? '<span class="tag good">nothing — every specific appears on their website</span>'
+      : model.grounding.findings
+          .map((f) => `<span class="tag bad">${escape(f.specific)}</span>`)
+          .join(' ')
+  }</dd>
+</dl>
+</div>`
+    : '';
+
+  const triggerPanel = triggers
+    ? `<div class="panel">
+<h2>What Signal looked for</h2>
+<p class="lede">Derived from the business above, not from a fixed list of buying signals. Each one names the offering it leads to — a change with no route to something they sell is not a trigger.</p>
+<div class="scroller"><table><thead><tr><th>Event</th><th>Why it creates demand</th><th>Leads to</th><th></th></tr></thead><tbody>
+${triggers.triggers
+  .map(
+    (trigger) => `<tr>
+  <td>${escape(trigger.event)}</td>
+  <td>${escape(trigger.mechanism)}</td>
+  <td><span class="tag">${escape(trigger.offering)}</span></td>
+  <td><span class="tag ${trigger.strength === 'strong' ? 'good' : ''}">${escape(trigger.strength)}</span></td>
+</tr>`,
+  )
+  .join('')}
+</tbody></table></div>
+${
+  triggers.discarded.length + triggers.rejected.length > 0
+    ? `<h3>Discarded as generic</h3><ul class="list">${[
+        ...triggers.rejected.map((r) => `${r.event} — ${r.why}`),
+        ...triggers.discarded.map((d) => `${d.event} — ${d.reason}`),
+      ]
+        .map((line) => `<li class="src">${escape(line)}</li>`)
+        .join('')}</ul>`
+    : ''
+}
+</div>`
+    : '';
+
+  return `${modelPanel}${triggerPanel}
+<div class="panel">
+<h2>What this run actually did</h2>
+<dl class="kv">
+  <dt>Website pages read</dt><dd>${escape(record.corpus.pagesRead.length)} (${escape(record.corpus.totalChars)} characters)${
+    record.corpus.unavailable.length
+      ? ` — ${escape(record.corpus.unavailable.length)} could not be read`
+      : ''
+  }</dd>
+  <dt>Searches run</dt><dd>${escape(record.searches.filter((s) => !s.error).length)} of ${escape(record.searches.length)} planned${
+    record.searches.some((s) => s.error)
+      ? ` <span class="tag bad">${escape(record.searches.filter((s) => s.error).length)} could not be executed</span>`
+      : ''
+  }</dd>
+  <dt>Results discarded</dt><dd>${escape(record.ignoredResults.length)} (listicles, wrong subject, no event)</dd>
+  <dt>Companies identified</dt><dd>${escape(record.resolutions.resolved)} resolved, ${escape(record.resolutions.ambiguous)} ambiguous, ${escape(record.resolutions.unresolvable)} unresolvable</dd>
+</dl>
+<h3>Queries</h3>
+<ul class="list">${record.searches
+    .map(
+      (search) =>
+        `<li class="src"><code>${escape(search.query)}</code> ${
+          search.error
+            ? `<span class="tag bad">could not run: ${escape(search.error)}</span>`
+            : `<span class="tag">${escape(search.resultCount)} results</span>`
+        }</li>`,
+    )
+    .join('')}</ul>
+<p class="lede">Coverage is listed separately from findings on purpose. "We did not look" and "we looked and found nothing" are different statements.</p>
+</div>`;
+}
+
+/** The full brief. Reuses the V1 assessment rendering, with the trigger on top. */
+export function opportunityPage(run: StoredRun, index: number): string {
+  const opportunity = run.record.opportunities[index];
+  if (!opportunity || opportunity.assessment.status !== 'opportunity') {
+    return layout('Not found', '<h1>No such opportunity</h1><p><a href="/">Back</a></p>');
+  }
+
+  const { assessment, trigger, discovery } = opportunity;
+
+  const why = `<div class="panel">
+<h3>Why this matters to you</h3>
+<p><strong>The change:</strong> ${escape(trigger.event)}</p>
+<p><strong>The connection:</strong> ${escape(trigger.mechanism)}</p>
+<p><strong>What you sell into it:</strong> <span class="tag good">${escape(trigger.offering)}</span></p>
+<p class="src">Found while searching for this trigger. Signal will not report a company whose change has no route to something you sell.</p>
+</div>
+<div class="panel">
+<h3>How Signal found them</h3>
+<dl class="kv">
+  <dt>Discovered by</dt><dd>search, not a supplied list</dd>
+  <dt>As reported</dt><dd>${escape(discovery.whatHappened)}</dd>
+  <dt>Date given by the source</dt><dd>${escape(discovery.whenText) || '<span class="tag warn">none</span>'}</dd>
+  <dt>Identity established</dt><dd>${escape(assessment.company.domain)}</dd>
+</dl>
+</div>`;
+
+  // The V1 brief, unchanged, with the discovery context inserted before it.
+  const brief = assessmentPage(assessment, `/run/${run.id}`);
+  return brief.replace('<div class="panel">\n<h3>Why now</h3>', `${why}<div class="panel">\n<h3>Why now</h3>`);
+}

@@ -8,6 +8,7 @@ import {
   addEvidence,
   addTarget,
   evidenceFor,
+  emptyStore,
   FileStore,
   latestAssessment,
   MemoryStore,
@@ -42,7 +43,7 @@ test('a missing store reads as empty and a written one survives a reopen', async
 
 test('a corrupt store fails loudly rather than starting fresh over the top of it', async () => {
   const path = await tempPath();
-  await new FileStore(path).write({ version: 1, clients: [], targets: [], evidence: [], assessments: [] });
+  await new FileStore(path).write(emptyStore());
   await writeFile(path, '{ not json', 'utf8');
   await assert.rejects(() => new FileStore(path).read(), /could not read the store/);
 });

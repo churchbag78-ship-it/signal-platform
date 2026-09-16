@@ -18,6 +18,7 @@ import type { IdentityFingerprint, IsoDate } from '../../engine/src/domain.ts';
 import type { ClientProfile } from '../../engine/src/pipeline.ts';
 import type { ProvidedEvidence } from './providers.ts';
 import type { Assessment } from './analyse.ts';
+import type { RunRecord } from './run.ts';
 
 export interface StoredClient {
   id: string;
@@ -46,8 +47,22 @@ export interface StoredAssessment {
   assessment: Assessment;
 }
 
+/**
+ * A completed discovery run: one website in, opportunities and refusals out.
+ * This is the product's main record. The client/target/evidence tables below
+ * belong to the manual diagnostic path and are kept for that purpose only.
+ */
+export interface StoredRun {
+  id: string;
+  website: string;
+  runDate: IsoDate;
+  createdAt: string;
+  record: RunRecord;
+}
+
 export interface StoreData {
   version: 1;
+  runs: StoredRun[];
   clients: StoredClient[];
   targets: StoredTarget[];
   evidence: StoredEvidence[];
@@ -55,7 +70,7 @@ export interface StoreData {
 }
 
 export function emptyStore(): StoreData {
-  return { version: 1, clients: [], targets: [], evidence: [], assessments: [] };
+  return { version: 1, runs: [], clients: [], targets: [], evidence: [], assessments: [] };
 }
 
 export interface Store {
@@ -89,6 +104,7 @@ export class FileStore implements Store {
       // Tolerate a file written by an earlier shape, but never invent records.
       this.#cache = {
         version: 1,
+        runs: parsed.runs ?? [],
         clients: parsed.clients ?? [],
         targets: parsed.targets ?? [],
         evidence: parsed.evidence ?? [],
@@ -202,6 +218,31 @@ export async function recordAssessment(
   // it would erase the only evidence of whether the system is improving.
   await store.write({ ...data, assessments: [...data.assessments, stored] });
   return stored;
+}
+
+export async function recordRun(
+  store: Store,
+  website: string,
+  runDate: IsoDate,
+  record: RunRecord,
+): Promise<StoredRun> {
+  const data = await store.read();
+  const run: StoredRun = {
+    id: newId('run'),
+    website,
+    runDate,
+    createdAt: new Date().toISOString(),
+    record,
+  };
+  // Runs accumulate. A run that found nothing is the record of a question
+  // asked and answered, and deleting it would hide that the system looked.
+  await store.write({ ...data, runs: [...data.runs, run] });
+  return run;
+}
+
+export function runsFor(data: StoreData, website?: string): StoredRun[] {
+  const runs = website ? data.runs.filter((run) => run.website === website) : data.runs;
+  return [...runs].reverse();
 }
 
 export function evidenceFor(data: StoreData, targetId: string): StoredEvidence[] {

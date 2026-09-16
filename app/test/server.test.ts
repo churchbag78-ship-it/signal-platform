@@ -32,10 +32,11 @@ function form(fields: Record<string, string>): RequestInit {
 
 const stubModels = (): Models => ({ extractor: stubExtractor(), reasoner: stubReasoner() });
 
-test('the eight-step journey works over HTTP, from empty to a readable brief', async () => {
+test('the manual diagnostic journey still works over HTTP, from empty to a readable brief', async () => {
   await withServer(stubModels(), async (base) => {
-    // 1. Nothing yet.
-    const home = await fetch(base);
+    // 1. Nothing yet. The manual harness now lives at /diagnostic — the
+    // product home is the website-in journey, which this test does not cover.
+    const home = await fetch(`${base}/diagnostic`);
     assert.equal(home.status, 200);
     assert.match(await home.text(), /No client yet/);
 
@@ -200,7 +201,7 @@ test('user input is escaped rather than rendered', async () => {
       `${base}/clients`,
       form({ name: '<script>alert(1)</script>', domain: 'c.com', offerings: 'x', demandTriggers: 'y' }),
     );
-    const body = await (await fetch(base)).text();
+    const body = await (await fetch(`${base}/diagnostic`)).text();
     assert.doesNotMatch(body, /<script>alert/);
     assert.match(body, /&lt;script&gt;/);
   });

@@ -92,9 +92,15 @@ export function modelsFromEnv(env: Record<string, string | undefined> = process.
   const preset = LLM_PRESETS.anthropic;
   if (!preset) throw new Error('the anthropic preset is missing from LLM_PRESETS');
 
+  // `SIGNAL_LLM_ENDPOINT` points both calls somewhere else. It exists so the
+  // HTTP path itself can be exercised against a local replay server — the one
+  // part of the product that a missing credential otherwise leaves untested.
+  // It is not a way to point the product at an arbitrary service in anger.
+  const endpoint = env.SIGNAL_LLM_ENDPOINT ?? preset.endpoint;
+
   return {
-    extractor: new LlmClaimExtractor({ ...preset, model, apiKey }),
-    reasoner: new Reasoner({ apiKey, model }),
+    extractor: new LlmClaimExtractor({ ...preset, endpoint, model, apiKey }),
+    reasoner: new Reasoner({ apiKey, model, endpoint }),
   };
 }
 
